@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Thumbnail Editor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Edit thumbnail</h1>
+        </header>
+        
+        <div class="main-content">
+            <div class="viewer-section">
+                <div id="viewer-container">
+                    <div id="loading-indicator">
+                        <div class="loader"></div>
+                        <p>Loading 3D Model...</p>
+                    </div>
+                    <button id="toggle-grid" class="grid-toggle-btn" title="Toggle Grid">⊞</button>
+                </div>
+                <div class="controls">
+                    <button id="zoom-in" class="control-btn">Zoom In</button>
+                    <button id="zoom-out" class="control-btn">Zoom Out</button>
+                    <button id="reset-view" class="control-btn">Reset View</button>
+                    <button id="take-snapshot" class="control-btn snapshot-btn">Take Snapshot</button>
+                </div>
+            </div>
+            
+            <div class="thumbnail-section">
+                <div id="current-thumbnail" class="thumbnail-display">
+                    <div class="thumbnail-label">Current thumbnail</div>
+                    <img src="old_thumbnail.png" alt="Current Thumbnail">
+                </div>
+                
+                <div id="new-thumbnail" class="thumbnail-display">
+                    <div id="drag-label" class="thumbnail-label">Drag to reposition</div>
+                    <canvas id="thumbnail-canvas" width="290" height="290"></canvas>
+                    <p id="thumbnail-placeholder">Take a snapshot to preview</p>
+                </div>
+                
+                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Use as Current Thumbnail</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
