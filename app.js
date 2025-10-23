@@ -8,6 +8,8 @@ let cameraPosition = { x: 5, y: 3, z: 8 };
 let targetRotation = { x: 0, y: 0 };
 let currentRotation = { x: 0, y: 0 };
 let newSnapshotData = null;
+let interactionTimeout = null; // Timer for interaction effect
+let isInteracting = false; // Track if we're currently showing the interaction effect
 
 // Canvas thumbnail state
 let thumbnailCanvas = null;
@@ -23,6 +25,8 @@ let isLiveUpdating = false; // Don't start updating until user interacts
 let lastThumbnailUpdate = 0; // Track last update time for throttling
 const THUMBNAIL_UPDATE_INTERVAL = 100; // Update thumbnail every 100ms (10 times per second)
 let hasUserInteracted = false; // Track if user has interacted with 3D canvas
+let thumbnailInteractionTimeout = null; // Timer for thumbnail interaction effect
+let isThumbnailInteracting = false; // Track if we're currently showing the thumbnail interaction effect
 
 // Initialize the 3D viewer
 function init() {
@@ -86,6 +90,12 @@ function init() {
     container.addEventListener('mousemove', onMouseMove);
     container.addEventListener('mouseup', onMouseUp);
     container.addEventListener('mouseleave', onMouseUp);
+    
+    // Touch controls for mobile
+    container.addEventListener('touchstart', onTouchStart);
+    container.addEventListener('touchmove', onTouchMove);
+    container.addEventListener('touchend', onTouchEnd);
+    container.addEventListener('touchcancel', onTouchEnd);
     
     // Mouse wheel for zoom
     container.addEventListener('wheel', onMouseWheel);
@@ -436,14 +446,38 @@ function enableLiveUpdating() {
     }
 }
 
+// Show update thumbnail button when view changes
+function showUpdateButton() {
+    const btn = document.getElementById('use-snapshot');
+    if (btn && thumbnailImage) {
+        btn.style.display = 'block';
+    }
+}
+
 // Mouse event handlers
 function onMouseDown(event) {
     enableLiveUpdating();
+    showUpdateButton();
     isDragging = true;
     previousMousePosition = {
         x: event.clientX,
         y: event.clientY
     };
+    
+    // Clear any existing timeout to prevent conflicts
+    if (interactionTimeout) {
+        clearTimeout(interactionTimeout);
+        interactionTimeout = null;
+    }
+    
+    // Add interacting class for visual feedback (only if not already interacting)
+    if (!isInteracting) {
+        const container = document.getElementById('viewer-container');
+        if (container) {
+            container.classList.add('interacting');
+            isInteracting = true;
+        }
+    }
 }
 
 function onMouseMove(event) {
@@ -466,11 +500,27 @@ function onMouseMove(event) {
 
 function onMouseUp() {
     isDragging = false;
+    
+    // Clear any existing timeout to prevent conflicts
+    if (interactionTimeout) {
+        clearTimeout(interactionTimeout);
+        interactionTimeout = null;
+    }
+    
+    // Remove interacting class (only if currently interacting)
+    if (isInteracting) {
+        const container = document.getElementById('viewer-container');
+        if (container) {
+            container.classList.remove('interacting');
+            isInteracting = false;
+        }
+    }
 }
 
 function onMouseWheel(event) {
     event.preventDefault();
     enableLiveUpdating();
+    showUpdateButton();
     const zoomSpeed = 0.1;
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
@@ -484,6 +534,92 @@ function onMouseWheel(event) {
     cameraPosition.x *= scale;
     cameraPosition.y *= scale;
     cameraPosition.z *= scale;
+    
+    // Add interacting class for wheel events (only if not already interacting)
+    const container = document.getElementById('viewer-container');
+    if (container && !isInteracting) {
+        container.classList.add('interacting');
+        isInteracting = true;
+    }
+    
+    // Clear any existing timeout
+    if (interactionTimeout) {
+        clearTimeout(interactionTimeout);
+    }
+    
+    // Remove class after a short delay when wheel stops
+    interactionTimeout = setTimeout(() => {
+        if (container && isInteracting) {
+            container.classList.remove('interacting');
+            isInteracting = false;
+        }
+    }, 200);
+}
+
+// Touch event handlers
+function onTouchStart(event) {
+    if (event.touches.length === 1) {
+        enableLiveUpdating();
+        showUpdateButton();
+        isDragging = true;
+        previousMousePosition = {
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY
+        };
+        
+        // Clear any existing timeout to prevent conflicts
+        if (interactionTimeout) {
+            clearTimeout(interactionTimeout);
+            interactionTimeout = null;
+        }
+        
+        // Add interacting class for visual feedback (only if not already interacting)
+        if (!isInteracting) {
+            const container = document.getElementById('viewer-container');
+            if (container) {
+                container.classList.add('interacting');
+                isInteracting = true;
+            }
+        }
+    }
+}
+
+function onTouchMove(event) {
+    if (event.touches.length === 1 && isDragging) {
+        event.preventDefault();
+        const deltaX = event.touches[0].clientX - previousMousePosition.x;
+        const deltaY = event.touches[0].clientY - previousMousePosition.y;
+        
+        targetRotation.y += deltaX * 0.01;
+        targetRotation.x += deltaY * 0.01;
+        
+        // Clamp vertical rotation
+        targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.x));
+        
+        previousMousePosition = {
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY
+        };
+    }
+}
+
+function onTouchEnd() {
+    isDragging = false;
+    
+    // Clear any existing timeout to prevent conflicts
+    if (interactionTimeout) {
+        clearTimeout(interactionTimeout);
+        interactionTimeout = null;
+    }
+    
+    // Remove interacting class (only if currently interacting)
+    if (isInteracting) {
+        const container = document.getElementById('viewer-container');
+        if (container) {
+            container.classList.remove('interacting');
+            isInteracting = false;
+        }
+    }
 }
 
 function onWindowResize() {
@@ -580,6 +716,7 @@ function animate() {
 // Button controls
 document.getElementById('zoom-in').addEventListener('click', () => {
     enableLiveUpdating();
+    showUpdateButton();
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
         cameraPosition.y ** 2 + 
@@ -595,6 +732,7 @@ document.getElementById('zoom-in').addEventListener('click', () => {
 
 document.getElementById('zoom-out').addEventListener('click', () => {
     enableLiveUpdating();
+    showUpdateButton();
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
         cameraPosition.y ** 2 + 
@@ -660,7 +798,7 @@ function initThumbnailCanvas() {
 }
 
 // Render thumbnail to canvas
-function renderThumbnail(includeGrid = null) {
+function renderThumbnail(includeGrid = null, includeBackground = true) {
     if (!thumbnailCanvas || !thumbnailCtx || !thumbnailImage) return;
     
     // Use showThumbnailGuides if includeGrid is not explicitly provided
@@ -669,9 +807,11 @@ function renderThumbnail(includeGrid = null) {
     // Clear canvas
     thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     
-    // Fill with background color
-    thumbnailCtx.fillStyle = '#121212';
-    thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+    // Fill with background color only if includeBackground is true
+    if (includeBackground) {
+        thumbnailCtx.fillStyle = '#121212';
+        thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+    }
     
     // Draw guides background image - only if shouldShowGrid is true
     if (shouldShowGrid && guidesImage && guidesImage.complete) {
@@ -698,6 +838,7 @@ function renderThumbnail(includeGrid = null) {
 
 // Thumbnail canvas mouse handlers
 function onThumbnailMouseDown(event) {
+    showUpdateButton();
     thumbnailDragging = true;
     const rect = thumbnailCanvas.getBoundingClientRect();
     // Scale factor to convert display coordinates to canvas coordinates
@@ -708,6 +849,21 @@ function onThumbnailMouseDown(event) {
         x: (event.clientX - rect.left) * scaleX - thumbnailOffset.x,
         y: (event.clientY - rect.top) * scaleY - thumbnailOffset.y
     };
+    
+    // Clear any existing timeout to prevent conflicts
+    if (thumbnailInteractionTimeout) {
+        clearTimeout(thumbnailInteractionTimeout);
+        thumbnailInteractionTimeout = null;
+    }
+    
+    // Add interacting class for visual feedback (only if not already interacting)
+    if (!isThumbnailInteracting) {
+        const container = document.getElementById('new-thumbnail');
+        if (container) {
+            container.classList.add('interacting');
+            isThumbnailInteracting = true;
+        }
+    }
 }
 
 function onThumbnailMouseMove(event) {
@@ -726,11 +882,27 @@ function onThumbnailMouseMove(event) {
 
 function onThumbnailMouseUp() {
     thumbnailDragging = false;
+    
+    // Clear any existing timeout to prevent conflicts
+    if (thumbnailInteractionTimeout) {
+        clearTimeout(thumbnailInteractionTimeout);
+        thumbnailInteractionTimeout = null;
+    }
+    
+    // Remove interacting class (only if currently interacting)
+    if (isThumbnailInteracting) {
+        const container = document.getElementById('new-thumbnail');
+        if (container) {
+            container.classList.remove('interacting');
+            isThumbnailInteracting = false;
+        }
+    }
 }
 
 // Thumbnail canvas wheel handler for resizing
 function onThumbnailWheel(event) {
     event.preventDefault();
+    showUpdateButton();
     
     const scaleSpeed = 0.05;
     
@@ -744,6 +916,26 @@ function onThumbnailWheel(event) {
     }
     
     renderThumbnail();
+    
+    // Add interacting class for wheel events (only if not already interacting)
+    const container = document.getElementById('new-thumbnail');
+    if (container && !isThumbnailInteracting) {
+        container.classList.add('interacting');
+        isThumbnailInteracting = true;
+    }
+    
+    // Clear any existing timeout
+    if (thumbnailInteractionTimeout) {
+        clearTimeout(thumbnailInteractionTimeout);
+    }
+    
+    // Remove class after a short delay when wheel stops
+    thumbnailInteractionTimeout = setTimeout(() => {
+        if (container && isThumbnailInteracting) {
+            container.classList.remove('interacting');
+            isThumbnailInteracting = false;
+        }
+    }, 200);
 }
 
 // Auto-show thumbnail canvas on first update
@@ -800,17 +992,35 @@ function clearThumbnailPreview() {
 
 document.getElementById('use-snapshot').addEventListener('click', () => {
     if (newSnapshotData && thumbnailCanvas && thumbnailCtx) {
-        // Render without grid for the final export
-        renderThumbnail(false);
+        // Hide the button until view changes
+        const btn = document.getElementById('use-snapshot');
+        if (btn) {
+            btn.style.display = 'none';
+        }
         
-        // Create a final composited image from the canvas with positioning applied (no grid)
+        // Render without grid and without background for transparent export
+        renderThumbnail(false, false);
+        
+        // Create a final composited image from the canvas with positioning applied (transparent background)
         const finalImageData = thumbnailCanvas.toDataURL('image/png');
         
-        // Move new snapshot to current thumbnail
         const currentThumbnailDiv = document.getElementById('current-thumbnail');
-        currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
         
-        // Re-render with guides to continue editing
+        // Show loading state immediately
+        currentThumbnailDiv.classList.add('loading');
+        
+        // After 0.5 seconds, update the thumbnail
+        setTimeout(() => {
+            // Update thumbnail content
+            currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
+            
+            // Start fading out the loading background immediately after image appears
+            setTimeout(() => {
+                currentThumbnailDiv.classList.remove('loading');
+            }, 10);
+        }, 500);
+        
+        // Re-render with guides and background to continue editing
         renderThumbnail();
         
         // Keep preview active - don't clear state
