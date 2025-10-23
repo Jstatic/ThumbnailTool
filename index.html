@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Thumbnail Editor</title>
+    <title>GLTF Thumbnail Editor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Edit thumbnail</h1>
+            <h1>GLTF Thumbnail Editor</h1>
         </header>
         
         <div class="main-content">
@@ -29,15 +29,15 @@
             <div class="thumbnail-section">
                 <div id="new-thumbnail" class="thumbnail-display">
                     <div id="drag-label" class="thumbnail-label">✥</div>
-                    <canvas id="thumbnail-canvas" width="280" height="280"></canvas>
+                    <canvas id="thumbnail-canvas" width="600" height="600"></canvas>
                     <p id="thumbnail-placeholder">Move around the model to preview</p>
                 </div>
                 
                 <div id="current-thumbnail" class="thumbnail-display">
+                    <div id="current-thumbnail-label" class="current-label">Current Thumbnail</div>
                     <img src="old_thumbnail.png" alt="Current Thumbnail">
                 </div>
                 
-                <div id="current-thumbnail-label" class="current-label">Current Thumbnail</div>
                 <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Thumbnail</button>
             </div>
         </div>

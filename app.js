@@ -16,6 +16,7 @@ let thumbnailImage = null;
 let thumbnailOffset = { x: 0, y: 0 };
 let thumbnailDragging = false;
 let thumbnailDragStart = { x: 0, y: 0 };
+let thumbnailScale = 1.0; // Scale factor for thumbnail preview
 let guidesImage = null;
 let showThumbnailGuides = true; // Track whether to show guides in thumbnail
 let isLiveUpdating = false; // Don't start updating until user interacts
@@ -44,8 +45,8 @@ function init() {
     // Create renderer with alpha support for transparent screenshots
     renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
     
-    // Fixed 650x650 square canvas
-    renderer.setSize(650, 650);
+    // Fixed 600x600 square canvas
+    renderer.setSize(600, 600);
     renderer.setClearColor(0x121212, 1); // Set default clear color to match background
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
@@ -608,16 +609,12 @@ document.getElementById('zoom-out').addEventListener('click', () => {
 });
 
 document.getElementById('reset-view').addEventListener('click', () => {
-    enableLiveUpdating();
     cameraPosition = { x: 5, y: 3, z: 8 };
     targetRotation = { x: 0, y: 0 };
     currentRotation = { x: 0, y: 0 };
     
-    // Also reset thumbnail position
-    thumbnailOffset = { x: 0, y: 0 };
-    if (thumbnailCanvas && thumbnailCanvas.classList.contains('active') && thumbnailImage) {
-        renderThumbnail();
-    }
+    // Clear the modified canvas state and preview
+    clearThumbnailPreview();
 });
 
 // Grid toggle functionality
@@ -657,6 +654,9 @@ function initThumbnailCanvas() {
     thumbnailCanvas.addEventListener('mousemove', onThumbnailMouseMove);
     thumbnailCanvas.addEventListener('mouseup', onThumbnailMouseUp);
     thumbnailCanvas.addEventListener('mouseleave', onThumbnailMouseUp);
+    
+    // Add event listener for resizing with mouse wheel
+    thumbnailCanvas.addEventListener('wheel', onThumbnailWheel);
 }
 
 // Render thumbnail to canvas
@@ -678,10 +678,10 @@ function renderThumbnail(includeGrid = null) {
         thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
-    // Draw image with current offset
-    const scale = Math.min(thumbnailCanvas.width / thumbnailImage.width, thumbnailCanvas.height / thumbnailImage.height);
-    const scaledWidth = thumbnailImage.width * scale;
-    const scaledHeight = thumbnailImage.height * scale;
+    // Draw image with current offset and scale
+    const baseScale = Math.min(thumbnailCanvas.width / thumbnailImage.width, thumbnailCanvas.height / thumbnailImage.height);
+    const scaledWidth = thumbnailImage.width * baseScale * thumbnailScale;
+    const scaledHeight = thumbnailImage.height * baseScale * thumbnailScale;
     
     // Center the image by default, then apply offset
     const centerX = (thumbnailCanvas.width - scaledWidth) / 2;
@@ -700,9 +700,13 @@ function renderThumbnail(includeGrid = null) {
 function onThumbnailMouseDown(event) {
     thumbnailDragging = true;
     const rect = thumbnailCanvas.getBoundingClientRect();
+    // Scale factor to convert display coordinates to canvas coordinates
+    const scaleX = thumbnailCanvas.width / rect.width;
+    const scaleY = thumbnailCanvas.height / rect.height;
+    
     thumbnailDragStart = {
-        x: event.clientX - rect.left - thumbnailOffset.x,
-        y: event.clientY - rect.top - thumbnailOffset.y
+        x: (event.clientX - rect.left) * scaleX - thumbnailOffset.x,
+        y: (event.clientY - rect.top) * scaleY - thumbnailOffset.y
     };
 }
 
@@ -710,14 +714,36 @@ function onThumbnailMouseMove(event) {
     if (!thumbnailDragging) return;
     
     const rect = thumbnailCanvas.getBoundingClientRect();
-    thumbnailOffset.x = event.clientX - rect.left - thumbnailDragStart.x;
-    thumbnailOffset.y = event.clientY - rect.top - thumbnailDragStart.y;
+    // Scale factor to convert display coordinates to canvas coordinates
+    const scaleX = thumbnailCanvas.width / rect.width;
+    const scaleY = thumbnailCanvas.height / rect.height;
+    
+    thumbnailOffset.x = (event.clientX - rect.left) * scaleX - thumbnailDragStart.x;
+    thumbnailOffset.y = (event.clientY - rect.top) * scaleY - thumbnailDragStart.y;
     
     renderThumbnail();
 }
 
 function onThumbnailMouseUp() {
     thumbnailDragging = false;
+}
+
+// Thumbnail canvas wheel handler for resizing
+function onThumbnailWheel(event) {
+    event.preventDefault();
+    
+    const scaleSpeed = 0.05;
+    
+    // Adjust scale based on wheel direction
+    if (event.deltaY < 0) {
+        // Scroll up = zoom in (increase scale)
+        thumbnailScale = Math.min(3.0, thumbnailScale + scaleSpeed);
+    } else {
+        // Scroll down = zoom out (decrease scale)
+        thumbnailScale = Math.max(0.3, thumbnailScale - scaleSpeed);
+    }
+    
+    renderThumbnail();
 }
 
 // Auto-show thumbnail canvas on first update
@@ -728,6 +754,47 @@ function showThumbnailCanvas() {
         document.getElementById('drag-label').classList.add('visible');
         document.getElementById('use-snapshot').style.display = 'block';
         document.getElementById('current-thumbnail-label').style.display = 'none';
+    }
+}
+
+// Clear the modified canvas state and preview
+function clearThumbnailPreview() {
+    // Reset state variables first
+    newSnapshotData = null;
+    thumbnailImage = null;
+    thumbnailOffset = { x: 0, y: 0 };
+    thumbnailScale = 1.0;
+    isLiveUpdating = false;
+    hasUserInteracted = false;
+    lastThumbnailUpdate = 0;
+    
+    // Clear and hide canvas
+    if (thumbnailCanvas && thumbnailCtx) {
+        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+        thumbnailCanvas.classList.remove('active');
+    }
+    
+    // Show placeholder, hide drag label
+    const placeholder = document.getElementById('thumbnail-placeholder');
+    if (placeholder) {
+        placeholder.classList.remove('hidden');
+    }
+    
+    const dragLabel = document.getElementById('drag-label');
+    if (dragLabel) {
+        dragLabel.classList.remove('visible');
+    }
+    
+    // Hide update button
+    const updateBtn = document.getElementById('use-snapshot');
+    if (updateBtn) {
+        updateBtn.style.display = 'none';
+    }
+    
+    // Show current thumbnail label
+    const currentLabel = document.getElementById('current-thumbnail-label');
+    if (currentLabel) {
+        currentLabel.style.display = 'block';
     }
 }
 
@@ -743,24 +810,8 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         const currentThumbnailDiv = document.getElementById('current-thumbnail');
         currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
         
-        // Clear new snapshot area
-        thumbnailCanvas.classList.remove('active');
-        document.getElementById('thumbnail-placeholder').classList.remove('hidden');
-        document.getElementById('drag-label').classList.remove('visible');
-        
-        // Clear canvas
-        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-        
-        // Hide the button and show the label
-        document.getElementById('use-snapshot').style.display = 'none';
-        document.getElementById('current-thumbnail-label').style.display = 'block';
-        
-        // Reset state - user must interact again to trigger next preview
-        newSnapshotData = null;
-        thumbnailImage = null;
-        thumbnailOffset = { x: 0, y: 0 };
-        isLiveUpdating = false;
-        hasUserInteracted = false;
+        // Clear the modified canvas state and preview
+        clearThumbnailPreview();
     }
 });
 
