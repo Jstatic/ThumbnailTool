@@ -56,6 +56,7 @@ header h1 {
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+    cursor: grab;
 }
 
 #viewer-container > canvas:not(#orientation-indicator) {
@@ -261,10 +262,6 @@ header h1 {
     display: none;
 }
 
-#drag-label.visible {
-    /* display: block; */
-}
-
 .thumbnail-display p {
     color: #5a6a7a;
     font-style: italic;
@@ -280,7 +277,7 @@ header h1 {
 
 #thumbnail-canvas {
     display: none;
-    cursor: grab;
+    cursor: move;
     position: absolute;
     top: 0;
     left: 0;
@@ -290,10 +287,6 @@ header h1 {
 
 #thumbnail-canvas.active {
     display: block;
-}
-
-#thumbnail-canvas:active {
-    cursor: grabbing;
 }
 
 #thumbnail-placeholder {

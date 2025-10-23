@@ -810,8 +810,11 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         const currentThumbnailDiv = document.getElementById('current-thumbnail');
         currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
         
-        // Clear the modified canvas state and preview
-        clearThumbnailPreview();
+        // Re-render with guides to continue editing
+        renderThumbnail();
+        
+        // Keep preview active - don't clear state
+        // User can continue to reposition and update again
     }
 });
 
