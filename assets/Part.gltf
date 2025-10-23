@@ -1,0 +1,141 @@
+{
+  "accessors": [
+    {
+      "name": "INDEX",
+      "bufferView": 0,
+      "componentType": 5125,
+      "type": "SCALAR",
+      "count": 36
+    },
+    {
+      "name": "POSITION",
+      "bufferView": 1,
+      "componentType": 5126,
+      "type": "VEC3",
+      "count": 24,
+      "min": [-0.5, -0.5, -0.5],
+      "max": [0.5, 0.5, 0.5]
+    },
+    {
+      "name": "NORMAL",
+      "bufferView": 2,
+      "componentType": 5126,
+      "type": "VEC3",
+      "count": 24
+    },
+    {
+      "name": "TEXCOORD_0",
+      "bufferView": 3,
+      "componentType": 5126,
+      "type": "VEC2",
+      "count": 24
+    },
+    {
+      "name": "COLOR_0",
+      "bufferView": 4,
+      "componentType": 5121,
+      "type": "VEC4",
+      "normalized": true,
+      "count": 24
+    }
+  ],
+  "asset": {
+    "generator": "Roblox Export",
+    "version": "2.0",
+    "min_version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "name": "INDEX",
+      "buffer": 0,
+      "byteLength": 144
+    },
+    {
+      "name": "POSITION",
+      "buffer": 1,
+      "byteLength": 288
+    },
+    {
+      "name": "NORMAL",
+      "buffer": 2,
+      "byteLength": 288
+    },
+    {
+      "name": "TEXCOORD_0",
+      "buffer": 3,
+      "byteLength": 192
+    },
+    {
+      "name": "COLOR_0",
+      "buffer": 4,
+      "byteLength": 96
+    }
+  ],
+  "buffers": [
+    {
+      "name": "INDEX",
+      "uri": "data:application/octet-stream;base64,AAAAAAEAAAACAAAAAgAAAAMAAAAAAAAABAAAAAUAAAAGAAAABgAAAAcAAAAEAAAACAAAAAkAAAAKAAAACgAAAAsAAAAIAAAADAAAAA0AAAAOAAAADgAAAA8AAAAMAAAAEAAAABEAAAASAAAAEgAAABMAAAAQAAAAFAAAABUAAAAWAAAAFgAAABcAAAAUAAAA",
+      "byteLength": 144
+    },
+    {
+      "name": "POSITION",
+      "uri": "data:application/octet-stream;base64,AAAAPwAAAD8AAAA/AAAAPwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAD8AAAA/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAD8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAvwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAL8AAAC/AAAAvwAAAL8AAAC/",
+      "byteLength": 288
+    },
+    {
+      "name": "NORMAL",
+      "uri": "data:application/octet-stream;base64,AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/",
+      "byteLength": 288
+    },
+    {
+      "name": "TEXCOORD_0",
+      "uri": "data:application/octet-stream;base64,AAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAIA/AACAPwAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAIA/AACAPwAAAAAAAIA/",
+      "byteLength": 192
+    },
+    {
+      "name": "COLOR_0",
+      "uri": "data:application/octet-stream;base64,o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/o6Kl/6Oipf+joqX/",
+      "byteLength": 96
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Part",
+      "primitives": [
+        {
+          "indices": 0,
+          "material": 0,
+          "attributes": {
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3,
+            "COLOR_0": 4
+          }
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.639215708, 0.635294139, 0.647058845, 1]
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "children": [ ],
+      "mesh": 0,
+      "name": "Part",
+      "translation": [18.0200005, 0.500003994, 18.2399998],
+      "scale": [4, 1, 2],
+      "extras": {"RobloxInstanceType":"Part","RobloxUniqueId":"39048897-338e-70dd-090c-497200000dfb","Shape":"Block","Material":"plastic","Color":"(163, 162, 165)","Transparency":0,"Anchored":false}
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [ 0 ]
+    }
+  ]
+}
+

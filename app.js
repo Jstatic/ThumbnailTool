@@ -1,15 +1,11 @@
 // Three.js scene setup
-let scene, camera, renderer, car;
+let scene, camera, renderer, car, controls;
 let orientationScene, orientationCamera, orientationRenderer;
 let gridHelper;
-let isDragging = false;
-let previousMousePosition = { x: 0, y: 0 };
-let cameraPosition = { x: 5, y: 3, z: 8 };
-let targetRotation = { x: 0, y: 0 };
-let currentRotation = { x: 0, y: 0 };
 let newSnapshotData = null;
 let interactionTimeout = null; // Timer for interaction effect
 let isInteracting = false; // Track if we're currently showing the interaction effect
+let currentModelUrl = 'assets/Turkey.gltf'; // Track the currently loaded model
 
 // Canvas thumbnail state
 let thumbnailCanvas = null;
@@ -38,40 +34,52 @@ function init() {
     
     // Create camera with 1:1 aspect ratio for square canvas
     camera = new THREE.PerspectiveCamera(
-        45,
+        60,
         1, // Always 1:1 aspect ratio for square canvas
-        0.1,
+        0.01,
         1000
     );
-    camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 2, 5);
     
     // Create renderer with alpha support for transparent screenshots
-    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        preserveDrawingBuffer: true, 
+        alpha: true
+    });
     
-    // Fixed 600x600 square canvas
-    renderer.setSize(600, 600);
-    renderer.setClearColor(0x121212, 1); // Set default clear color to match background
+    // Fixed 1200x1200 square canvas
+    renderer.setSize(1200, 1200);
+    renderer.setClearColor(0x121212, 1);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Standard glTF viewer settings (matching three-gltf-viewer)
+    renderer.physicallyCorrectLights = true; // punctualLights enabled
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // ACES Filmic tone mapping (standard)
+    renderer.toneMappingExposure = 1.0; // exposure: 1.0 (default)
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    
     container.appendChild(renderer.domElement);
     
-    // Add lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Lighting setup matching three-gltf-viewer Neutral environment
+    // Ambient light with intensity 0.3
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    directionalLight.position.set(5, 10, 5);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-    
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight2.position.set(-5, 5, -5);
-    scene.add(directionalLight2);
-    
-    // Add rim light for better visibility in dark mode
-    const rimLight = new THREE.DirectionalLight(0x4488ff, 0.4);
-    rimLight.position.set(0, 3, -10);
-    scene.add(rimLight);
+    // Directional light with intensity 2.5
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    dirLight.position.set(5, 10, 7.5);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add(dirLight);
     
     // Create grid plane
     createGridPlane();
@@ -82,122 +90,149 @@ function init() {
     // Create orientation indicator
     createOrientationIndicator();
     
+    // OrbitControls setup (three-gltf-viewer standard)
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 2;
+    controls.maxDistance = 20;
+    controls.maxPolarAngle = Math.PI / 2;
+    
+    // Add interaction handlers for visual feedback
+    controls.addEventListener('start', onControlsStart);
+    controls.addEventListener('end', onControlsEnd);
+    
     // Handle window resize
     window.addEventListener('resize', onWindowResize);
-    
-    // Mouse controls for rotation
-    container.addEventListener('mousedown', onMouseDown);
-    container.addEventListener('mousemove', onMouseMove);
-    container.addEventListener('mouseup', onMouseUp);
-    container.addEventListener('mouseleave', onMouseUp);
-    
-    // Touch controls for mobile
-    container.addEventListener('touchstart', onTouchStart);
-    container.addEventListener('touchmove', onTouchMove);
-    container.addEventListener('touchend', onTouchEnd);
-    container.addEventListener('touchcancel', onTouchEnd);
-    
-    // Mouse wheel for zoom
-    container.addEventListener('wheel', onMouseWheel);
     
     // Start animation loop
     animate();
 }
 
+// Load a specific model by URL
+function loadModel(modelUrl) {
+    currentModelUrl = modelUrl;
+    
+    // Show loading indicator
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+    }
+    
+    // Clear the thumbnail preview
+    clearThumbnailPreview();
+    
+    // Reset camera position and controls target to center the new model
+    if (camera && controls) {
+        camera.position.set(0, 2, 5);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    }
+    
+    const loader = new THREE.GLTFLoader();
+    const modelConfig = {
+        url: modelUrl,
+        scale: 1.0,
+        position: { x: 0, y: 0, z: 0 }
+    };
+    
+    console.log(`Loading model: ${modelConfig.url}`);
+    
+    loader.load(
+        modelConfig.url,
+        function (gltf) {
+            console.log('Model loaded successfully!');
+            
+            // Hide loading indicator
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Clear any existing models
+            while(car.children.length > 0) {
+                car.remove(car.children[0]);
+            }
+            
+            car.add(gltf.scene);
+            
+            // Compute bounding box for the entire model
+            const box = new THREE.Box3().setFromObject(gltf.scene);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            console.log('Model bounds:', { center, size });
+            
+            // Center the model on X and Z axes, but keep it on the ground (Y=0)
+            gltf.scene.position.x = -center.x;
+            gltf.scene.position.y = -box.min.y; // Position so bottom of model is at Y=0
+            gltf.scene.position.z = -center.z;
+            
+            // Calculate scale to fit model within a reasonable size (target max dimension of 4 units)
+            const maxDimension = Math.max(size.x, size.y, size.z);
+            const targetSize = 4; // Target maximum dimension
+            const autoScale = maxDimension > targetSize ? targetSize / maxDimension : 1;
+            
+            console.log('Auto-scale factor:', autoScale);
+            
+            // Apply scale to the parent group
+            car.scale.set(autoScale * modelConfig.scale, autoScale * modelConfig.scale, autoScale * modelConfig.scale);
+            
+            // Enable shadows and fix texture encoding
+            gltf.scene.traverse(function (node) {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    node.receiveShadow = true;
+                    
+                    // Fix texture encoding for proper color display
+                    if (node.material) {
+                        if (node.material.map) {
+                            node.material.map.encoding = THREE.sRGBEncoding;
+                        }
+                        if (node.material.emissiveMap) {
+                            node.material.emissiveMap.encoding = THREE.sRGBEncoding;
+                        }
+                        // Update the material to reflect changes
+                        node.material.needsUpdate = true;
+                    }
+                }
+            });
+        },
+        function (xhr) {
+            const percent = xhr.total > 0 ? (xhr.loaded / xhr.total * 100) : 0;
+            console.log(percent.toFixed(2) + '% loaded');
+        },
+        function (error) {
+            console.log(`Error loading model: ${error.message || error}`);
+            console.log('Using fallback model');
+            createEnhancedCarModel();
+        }
+    );
+}
+
 // Create a high-quality car model
 function createCarModel() {
     car = new THREE.Group();
-    
-    // Try to load a GLTF model, fallback to enhanced procedural model
-    const loader = new THREE.GLTFLoader();
-    
-    // List of ice cream truck model URLs to try (in order of preference)
-    const modelUrls = [
-        {
-            url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
-            scale: 0.5,
-            position: { x: 0, y: 0, z: 0 }
-        },
-        {
-            url: 'https://models.readyplayer.me/64e1c0e5e4b0a9c8f8e5a1d2.glb',
-            scale: 2,
-            position: { x: 0, y: 0, z: 0 }
-        }
-    ];
-    
-    let currentModelIndex = 0;
-    
-    function tryLoadModel() {
-        if (currentModelIndex >= modelUrls.length) {
-            console.log('All model URLs failed, using enhanced fallback');
-            createEnhancedCarModel();
-            return;
-        }
-        
-        const modelConfig = modelUrls[currentModelIndex];
-        console.log(`Attempting to load model ${currentModelIndex + 1}/${modelUrls.length}: ${modelConfig.url}`);
-        
-        loader.load(
-            modelConfig.url,
-            function (gltf) {
-                console.log('Model loaded successfully!');
-                
-                // Hide loading indicator
-                const loadingIndicator = document.getElementById('loading-indicator');
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-                
-                // Clear any existing models
-                while(car.children.length > 0) {
-                    car.remove(car.children[0]);
-                }
-                
-                car.add(gltf.scene);
-                car.scale.set(modelConfig.scale, modelConfig.scale, modelConfig.scale);
-                
-                // Compute bounding box for the entire model to center it
-                const box = new THREE.Box3().setFromObject(gltf.scene);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                
-                console.log('Model bounds:', { center, size });
-                
-                // Center the model on X and Z axes, but keep it on the ground (Y=0)
-                gltf.scene.position.x = -center.x;
-                gltf.scene.position.y = -box.min.y; // Position so bottom of model is at Y=0
-                gltf.scene.position.z = -center.z;
-                
-                // Enable shadows
-                gltf.scene.traverse(function (node) {
-                    if (node.isMesh) {
-                        node.castShadow = true;
-                        node.receiveShadow = true;
-                    }
-                });
-            },
-            function (xhr) {
-                const percent = xhr.total > 0 ? (xhr.loaded / xhr.total * 100) : 0;
-                console.log(percent.toFixed(2) + '% loaded');
-            },
-            function (error) {
-                console.log(`Error loading model ${currentModelIndex + 1}: ${error.message || error}`);
-                currentModelIndex++;
-                tryLoadModel();
-            }
-        );
-    }
-    
-    tryLoadModel();
     scene.add(car);
+    
+    // Load the initial model
+    loadModel(currentModelUrl);
 }
 
-// Create grid plane
+// Create grid plane - matching three-gltf-viewer implementation
 function createGridPlane() {
     const size = 20;
     const divisions = 20;
+    
     gridHelper = new THREE.GridHelper(size, divisions, 0x4a4a4a, 0x2a2a2a);
-    gridHelper.position.y = 0;
+    gridHelper.position.set(0, 0, 0);
+    
+    // Configure material to prevent z-fighting (from three-gltf-viewer)
+    gridHelper.material.depthWrite = false;
+    gridHelper.material.opacity = 0.25;
+    gridHelper.material.transparent = true;
+    gridHelper.renderOrder = 1; // Render after other objects
+    
     scene.add(gridHelper);
 }
 
@@ -454,15 +489,10 @@ function showUpdateButton() {
     }
 }
 
-// Mouse event handlers
-function onMouseDown(event) {
+// Controls interaction handlers
+function onControlsStart() {
     enableLiveUpdating();
     showUpdateButton();
-    isDragging = true;
-    previousMousePosition = {
-        x: event.clientX,
-        y: event.clientY
-    };
     
     // Clear any existing timeout to prevent conflicts
     if (interactionTimeout) {
@@ -470,154 +500,43 @@ function onMouseDown(event) {
         interactionTimeout = null;
     }
     
-    // Add interacting class for visual feedback (only if not already interacting)
+    // Add interacting class for visual feedback
     if (!isInteracting) {
         const container = document.getElementById('viewer-container');
         if (container) {
             container.classList.add('interacting');
             isInteracting = true;
         }
+        
+        // Cascade to thumbnail preview
+        const thumbnailContainer = document.getElementById('new-thumbnail');
+        if (thumbnailContainer && !isThumbnailInteracting) {
+            thumbnailContainer.classList.add('interacting');
+            isThumbnailInteracting = true;
+        }
     }
 }
 
-function onMouseMove(event) {
-    if (isDragging) {
-        const deltaX = event.clientX - previousMousePosition.x;
-        const deltaY = event.clientY - previousMousePosition.y;
-        
-        targetRotation.y += deltaX * 0.01;
-        targetRotation.x += deltaY * 0.01;
-        
-        // Clamp vertical rotation
-        targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.x));
-        
-        previousMousePosition = {
-            x: event.clientX,
-            y: event.clientY
-        };
-    }
-}
-
-function onMouseUp() {
-    isDragging = false;
-    
+function onControlsEnd() {
     // Clear any existing timeout to prevent conflicts
     if (interactionTimeout) {
         clearTimeout(interactionTimeout);
         interactionTimeout = null;
     }
     
-    // Remove interacting class (only if currently interacting)
+    // Remove interacting class
     if (isInteracting) {
         const container = document.getElementById('viewer-container');
         if (container) {
             container.classList.remove('interacting');
             isInteracting = false;
         }
-    }
-}
-
-function onMouseWheel(event) {
-    event.preventDefault();
-    enableLiveUpdating();
-    showUpdateButton();
-    const zoomSpeed = 0.1;
-    const distance = Math.sqrt(
-        cameraPosition.x ** 2 + 
-        cameraPosition.y ** 2 + 
-        cameraPosition.z ** 2
-    );
-    
-    const newDistance = Math.max(3, Math.min(20, distance + (event.deltaY > 0 ? zoomSpeed : -zoomSpeed)));
-    const scale = newDistance / distance;
-    
-    cameraPosition.x *= scale;
-    cameraPosition.y *= scale;
-    cameraPosition.z *= scale;
-    
-    // Add interacting class for wheel events (only if not already interacting)
-    const container = document.getElementById('viewer-container');
-    if (container && !isInteracting) {
-        container.classList.add('interacting');
-        isInteracting = true;
-    }
-    
-    // Clear any existing timeout
-    if (interactionTimeout) {
-        clearTimeout(interactionTimeout);
-    }
-    
-    // Remove class after a short delay when wheel stops
-    interactionTimeout = setTimeout(() => {
-        if (container && isInteracting) {
-            container.classList.remove('interacting');
-            isInteracting = false;
-        }
-    }, 200);
-}
-
-// Touch event handlers
-function onTouchStart(event) {
-    if (event.touches.length === 1) {
-        enableLiveUpdating();
-        showUpdateButton();
-        isDragging = true;
-        previousMousePosition = {
-            x: event.touches[0].clientX,
-            y: event.touches[0].clientY
-        };
         
-        // Clear any existing timeout to prevent conflicts
-        if (interactionTimeout) {
-            clearTimeout(interactionTimeout);
-            interactionTimeout = null;
-        }
-        
-        // Add interacting class for visual feedback (only if not already interacting)
-        if (!isInteracting) {
-            const container = document.getElementById('viewer-container');
-            if (container) {
-                container.classList.add('interacting');
-                isInteracting = true;
-            }
-        }
-    }
-}
-
-function onTouchMove(event) {
-    if (event.touches.length === 1 && isDragging) {
-        event.preventDefault();
-        const deltaX = event.touches[0].clientX - previousMousePosition.x;
-        const deltaY = event.touches[0].clientY - previousMousePosition.y;
-        
-        targetRotation.y += deltaX * 0.01;
-        targetRotation.x += deltaY * 0.01;
-        
-        // Clamp vertical rotation
-        targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, targetRotation.x));
-        
-        previousMousePosition = {
-            x: event.touches[0].clientX,
-            y: event.touches[0].clientY
-        };
-    }
-}
-
-function onTouchEnd() {
-    isDragging = false;
-    
-    // Clear any existing timeout to prevent conflicts
-    if (interactionTimeout) {
-        clearTimeout(interactionTimeout);
-        interactionTimeout = null;
-    }
-    
-    // Remove interacting class (only if currently interacting)
-    if (isInteracting) {
-        const container = document.getElementById('viewer-container');
-        if (container) {
-            container.classList.remove('interacting');
-            isInteracting = false;
+        // Cascade to thumbnail preview (only if not being directly interacted with)
+        const thumbnailContainer = document.getElementById('new-thumbnail');
+        if (thumbnailContainer && isThumbnailInteracting && !thumbnailDragging) {
+            thumbnailContainer.classList.remove('interacting');
+            isThumbnailInteracting = false;
         }
     }
 }
@@ -683,22 +602,10 @@ function updateThumbnailFromViewport() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Smooth rotation interpolation
-    currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
-    currentRotation.y += (targetRotation.y - currentRotation.y) * 0.1;
-    
-    // Update camera position based on rotation
-    const distance = Math.sqrt(
-        cameraPosition.x ** 2 + 
-        cameraPosition.y ** 2 + 
-        cameraPosition.z ** 2
-    );
-    
-    camera.position.x = distance * Math.cos(currentRotation.x) * Math.sin(currentRotation.y);
-    camera.position.y = distance * Math.sin(currentRotation.x) + 2;
-    camera.position.z = distance * Math.cos(currentRotation.x) * Math.cos(currentRotation.y);
-    
-    camera.lookAt(0, 0.5, 0);
+    // Update controls (for damping)
+    if (controls) {
+        controls.update();
+    }
     
     // Update orientation indicator to match main camera
     if (orientationCamera) {
@@ -717,39 +624,28 @@ function animate() {
 document.getElementById('zoom-in').addEventListener('click', () => {
     enableLiveUpdating();
     showUpdateButton();
-    const distance = Math.sqrt(
-        cameraPosition.x ** 2 + 
-        cameraPosition.y ** 2 + 
-        cameraPosition.z ** 2
-    );
-    const newDistance = Math.max(3, distance - 1);
-    const scale = newDistance / distance;
-    
-    cameraPosition.x *= scale;
-    cameraPosition.y *= scale;
-    cameraPosition.z *= scale;
+    if (controls) {
+        controls.dollyIn(1.2);
+        controls.update();
+    }
 });
 
 document.getElementById('zoom-out').addEventListener('click', () => {
     enableLiveUpdating();
     showUpdateButton();
-    const distance = Math.sqrt(
-        cameraPosition.x ** 2 + 
-        cameraPosition.y ** 2 + 
-        cameraPosition.z ** 2
-    );
-    const newDistance = Math.min(20, distance + 1);
-    const scale = newDistance / distance;
-    
-    cameraPosition.x *= scale;
-    cameraPosition.y *= scale;
-    cameraPosition.z *= scale;
+    if (controls) {
+        controls.dollyOut(1.2);
+        controls.update();
+    }
 });
 
 document.getElementById('reset-view').addEventListener('click', () => {
-    cameraPosition = { x: 5, y: 3, z: 8 };
-    targetRotation = { x: 0, y: 0 };
-    currentRotation = { x: 0, y: 0 };
+    if (controls) {
+        // Reset camera to initial position
+        camera.position.set(0, 2, 5);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    }
     
     // Clear the modified canvas state and preview
     clearThumbnailPreview();
@@ -904,7 +800,7 @@ function onThumbnailWheel(event) {
     event.preventDefault();
     showUpdateButton();
     
-    const scaleSpeed = 0.05;
+    const scaleSpeed = 0.025;
     
     // Adjust scale based on wheel direction
     if (event.deltaY < 0) {
@@ -1004,8 +900,11 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         
         // After 0.5 seconds, update the thumbnail
         setTimeout(() => {
-            // Update thumbnail content (preserve the label)
-            currentThumbnailDiv.innerHTML = `<div class="viewport-label">Current</div><img src="${finalImageData}" alt="Current Thumbnail">`;
+            // Update only the image source, leave the label as-is
+            const img = currentThumbnailDiv.querySelector('img');
+            if (img) {
+                img.src = finalImageData;
+            }
             
             // Start fading out the loading background immediately after image appears
             setTimeout(() => {
@@ -1026,9 +925,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelBtn = document.getElementById('cancel-btn');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
-            cameraPosition = { x: 5, y: 3, z: 8 };
-            targetRotation = { x: 0, y: 0 };
-            currentRotation = { x: 0, y: 0 };
+            if (controls) {
+                // Reset camera to initial position
+                camera.position.set(0, 2, 5);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
             
             // Clear the modified canvas state and preview
             clearThumbnailPreview();
@@ -1045,6 +947,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const gridBtn = document.getElementById('toggle-grid');
     if (gridBtn) {
         gridBtn.classList.add('active');
+    }
+    
+    // Add event listener for model selector
+    const modelSelector = document.getElementById('model-selector');
+    if (modelSelector) {
+        modelSelector.addEventListener('change', (event) => {
+            const selectedModel = event.target.value;
+            console.log('Model changed to:', selectedModel);
+            loadModel(selectedModel);
+        });
     }
 });
 
