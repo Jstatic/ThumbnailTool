@@ -20,28 +20,25 @@
                         <p>Loading 3D Model...</p>
                     </div>
                     <button id="toggle-grid" class="grid-toggle-btn" title="Toggle Grid">⊞</button>
-                </div>
-                <div class="controls">
-                    <button id="zoom-in" class="control-btn">Zoom In</button>
-                    <button id="zoom-out" class="control-btn">Zoom Out</button>
-                    <button id="reset-view" class="control-btn">Reset View</button>
-                    <button id="take-snapshot" class="control-btn snapshot-btn">Take Snapshot</button>
+                    <button id="reset-view" class="reset-view-btn" title="Reset View">Reset ↺</button>
+                    <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
+                    <button id="zoom-out" class="zoom-btn" title="Zoom Out">−</button>
                 </div>
             </div>
             
             <div class="thumbnail-section">
+                <div id="new-thumbnail" class="thumbnail-display">
+                    <div id="drag-label" class="thumbnail-label">✥</div>
+                    <canvas id="thumbnail-canvas" width="280" height="280"></canvas>
+                    <p id="thumbnail-placeholder">Move around the model to preview</p>
+                </div>
+                
                 <div id="current-thumbnail" class="thumbnail-display">
-                    <div class="thumbnail-label">Current thumbnail</div>
                     <img src="old_thumbnail.png" alt="Current Thumbnail">
                 </div>
                 
-                <div id="new-thumbnail" class="thumbnail-display">
-                    <div id="drag-label" class="thumbnail-label">Drag to reposition</div>
-                    <canvas id="thumbnail-canvas" width="290" height="290"></canvas>
-                    <p id="thumbnail-placeholder">Take a snapshot to preview</p>
-                </div>
-                
-                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Use as Current Thumbnail</button>
+                <div id="current-thumbnail-label" class="current-label">Current Thumbnail</div>
+                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Thumbnail</button>
             </div>
         </div>
     </div>

@@ -16,6 +16,12 @@ let thumbnailImage = null;
 let thumbnailOffset = { x: 0, y: 0 };
 let thumbnailDragging = false;
 let thumbnailDragStart = { x: 0, y: 0 };
+let guidesImage = null;
+let showThumbnailGuides = true; // Track whether to show guides in thumbnail
+let isLiveUpdating = false; // Don't start updating until user interacts
+let lastThumbnailUpdate = 0; // Track last update time for throttling
+const THUMBNAIL_UPDATE_INTERVAL = 100; // Update thumbnail every 100ms (10 times per second)
+let hasUserInteracted = false; // Track if user has interacted with 3D canvas
 
 // Initialize the 3D viewer
 function init() {
@@ -38,8 +44,8 @@ function init() {
     // Create renderer with alpha support for transparent screenshots
     renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
     
-    // Fixed 600x600 square canvas
-    renderer.setSize(600, 600);
+    // Fixed 650x650 square canvas
+    renderer.setSize(650, 650);
     renderer.setClearColor(0x121212, 1); // Set default clear color to match background
     renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
@@ -421,8 +427,17 @@ function createEnhancedCarModel() {
     console.log('Fallback model centered:', { center, position: carGroup.position });
 }
 
+// Enable live updating on first user interaction
+function enableLiveUpdating() {
+    if (!hasUserInteracted) {
+        hasUserInteracted = true;
+        isLiveUpdating = true;
+    }
+}
+
 // Mouse event handlers
 function onMouseDown(event) {
+    enableLiveUpdating();
     isDragging = true;
     previousMousePosition = {
         x: event.clientX,
@@ -454,6 +469,7 @@ function onMouseUp() {
 
 function onMouseWheel(event) {
     event.preventDefault();
+    enableLiveUpdating();
     const zoomSpeed = 0.1;
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
@@ -473,6 +489,57 @@ function onWindowResize() {
     // Fixed size canvas - no resizing
     camera.aspect = 1; // Always maintain 1:1 aspect ratio
     camera.updateProjectionMatrix();
+}
+
+// Update thumbnail with current 3D view
+function updateThumbnailFromViewport() {
+    if (!isLiveUpdating || !thumbnailCanvas || !thumbnailCtx) return;
+    
+    // Throttle updates to avoid performance issues
+    const now = Date.now();
+    if (now - lastThumbnailUpdate < THUMBNAIL_UPDATE_INTERVAL) return;
+    lastThumbnailUpdate = now;
+    
+    // Temporarily set background to transparent for the snapshot
+    const originalBackground = scene.background;
+    scene.background = null;
+    
+    // Hide grid during snapshot
+    const gridWasVisible = gridHelper ? gridHelper.visible : false;
+    if (gridHelper) {
+        gridHelper.visible = false;
+    }
+    
+    // Clear with transparency and render the scene
+    renderer.setClearColor(0x000000, 0); // Transparent clear color
+    renderer.render(scene, camera);
+    
+    // Capture the canvas as an image (PNG with transparency)
+    const imageData = renderer.domElement.toDataURL('image/png');
+    
+    // Restore the original background and clear color
+    scene.background = originalBackground;
+    renderer.setClearColor(0x121212, 1);
+    
+    // Restore grid visibility
+    if (gridHelper) {
+        gridHelper.visible = gridWasVisible;
+    }
+    
+    // Store the snapshot data
+    newSnapshotData = imageData;
+    
+    // Load image and update display (preserve offset!)
+    thumbnailImage = new Image();
+    thumbnailImage.onload = () => {
+        // Show canvas on first update
+        showThumbnailCanvas();
+        
+        // DO NOT reset offset - preserve manual positioning
+        // Just re-render with the new image and existing offset
+        renderThumbnail();
+    };
+    thumbnailImage.src = imageData;
 }
 
 // Animation loop
@@ -504,10 +571,14 @@ function animate() {
     }
     
     renderer.render(scene, camera);
+    
+    // Update thumbnail preview if live updating is enabled
+    updateThumbnailFromViewport();
 }
 
 // Button controls
 document.getElementById('zoom-in').addEventListener('click', () => {
+    enableLiveUpdating();
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
         cameraPosition.y ** 2 + 
@@ -522,6 +593,7 @@ document.getElementById('zoom-in').addEventListener('click', () => {
 });
 
 document.getElementById('zoom-out').addEventListener('click', () => {
+    enableLiveUpdating();
     const distance = Math.sqrt(
         cameraPosition.x ** 2 + 
         cameraPosition.y ** 2 + 
@@ -536,17 +608,38 @@ document.getElementById('zoom-out').addEventListener('click', () => {
 });
 
 document.getElementById('reset-view').addEventListener('click', () => {
+    enableLiveUpdating();
     cameraPosition = { x: 5, y: 3, z: 8 };
     targetRotation = { x: 0, y: 0 };
     currentRotation = { x: 0, y: 0 };
+    
+    // Also reset thumbnail position
+    thumbnailOffset = { x: 0, y: 0 };
+    if (thumbnailCanvas && thumbnailCanvas.classList.contains('active') && thumbnailImage) {
+        renderThumbnail();
+    }
 });
 
 // Grid toggle functionality
 document.getElementById('toggle-grid').addEventListener('click', () => {
     if (gridHelper) {
         gridHelper.visible = !gridHelper.visible;
+        showThumbnailGuides = gridHelper.visible; // Sync thumbnail guides with grid visibility
+        
         const btn = document.getElementById('toggle-grid');
         btn.textContent = gridHelper.visible ? '⊞' : '⊟';
+        
+        // Toggle active class for visual feedback
+        if (gridHelper.visible) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        
+        // Re-render thumbnail if it's currently visible
+        if (thumbnailCanvas && thumbnailCanvas.classList.contains('active') && thumbnailImage) {
+            renderThumbnail();
+        }
     }
 });
 
@@ -554,6 +647,10 @@ document.getElementById('toggle-grid').addEventListener('click', () => {
 function initThumbnailCanvas() {
     thumbnailCanvas = document.getElementById('thumbnail-canvas');
     thumbnailCtx = thumbnailCanvas.getContext('2d');
+    
+    // Load guides image
+    guidesImage = new Image();
+    guidesImage.src = 'Guides.png';
     
     // Add event listeners for dragging
     thumbnailCanvas.addEventListener('mousedown', onThumbnailMouseDown);
@@ -563,8 +660,11 @@ function initThumbnailCanvas() {
 }
 
 // Render thumbnail to canvas
-function renderThumbnail(includeGrid = true) {
+function renderThumbnail(includeGrid = null) {
     if (!thumbnailCanvas || !thumbnailCtx || !thumbnailImage) return;
+    
+    // Use showThumbnailGuides if includeGrid is not explicitly provided
+    const shouldShowGrid = includeGrid !== null ? includeGrid : showThumbnailGuides;
     
     // Clear canvas
     thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
@@ -573,29 +673,9 @@ function renderThumbnail(includeGrid = true) {
     thumbnailCtx.fillStyle = '#121212';
     thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     
-    // Draw 3x3 grid (2 vertical and 2 horizontal lines) - only if includeGrid is true
-    if (includeGrid) {
-        thumbnailCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        thumbnailCtx.lineWidth = 1;
-        
-        const gridWidth = thumbnailCanvas.width / 3;
-        const gridHeight = thumbnailCanvas.height / 3;
-        
-        // Draw vertical lines
-        for (let i = 1; i < 3; i++) {
-            thumbnailCtx.beginPath();
-            thumbnailCtx.moveTo(gridWidth * i, 0);
-            thumbnailCtx.lineTo(gridWidth * i, thumbnailCanvas.height);
-            thumbnailCtx.stroke();
-        }
-        
-        // Draw horizontal lines
-        for (let i = 1; i < 3; i++) {
-            thumbnailCtx.beginPath();
-            thumbnailCtx.moveTo(0, gridHeight * i);
-            thumbnailCtx.lineTo(thumbnailCanvas.width, gridHeight * i);
-            thumbnailCtx.stroke();
-        }
+    // Draw guides background image - only if shouldShowGrid is true
+    if (shouldShowGrid && guidesImage && guidesImage.complete) {
+        thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
     // Draw image with current offset
@@ -640,56 +720,16 @@ function onThumbnailMouseUp() {
     thumbnailDragging = false;
 }
 
-// Snapshot functionality
-document.getElementById('take-snapshot').addEventListener('click', () => {
-    // Temporarily set background to transparent for the snapshot
-    const originalBackground = scene.background;
-    scene.background = null;
-    
-    // Hide grid during snapshot
-    const gridWasVisible = gridHelper ? gridHelper.visible : false;
-    if (gridHelper) {
-        gridHelper.visible = false;
-    }
-    
-    // Clear with transparency and render the scene
-    renderer.setClearColor(0x000000, 0); // Transparent clear color
-    renderer.render(scene, camera);
-    
-    // Capture the canvas as an image (PNG with transparency)
-    const imageData = renderer.domElement.toDataURL('image/png');
-    
-    // Restore the original background and clear color
-    scene.background = originalBackground;
-    renderer.setClearColor(0x121212, 1);
-    
-    // Restore grid visibility
-    if (gridHelper) {
-        gridHelper.visible = gridWasVisible;
-    }
-    
-    // Store the snapshot data
-    newSnapshotData = imageData;
-    
-    // Load image and display on canvas
-    thumbnailImage = new Image();
-    thumbnailImage.onload = () => {
-        // Reset offset when new image loads
-        thumbnailOffset = { x: 0, y: 0 };
-        
-        // Show canvas, hide placeholder, show drag label
+// Auto-show thumbnail canvas on first update
+function showThumbnailCanvas() {
+    if (thumbnailCanvas && !thumbnailCanvas.classList.contains('active')) {
         thumbnailCanvas.classList.add('active');
         document.getElementById('thumbnail-placeholder').classList.add('hidden');
         document.getElementById('drag-label').classList.add('visible');
-        
-        // Render the image
-        renderThumbnail();
-        
-        // Show the "Use as Current Thumbnail" button
         document.getElementById('use-snapshot').style.display = 'block';
-    };
-    thumbnailImage.src = imageData;
-});
+        document.getElementById('current-thumbnail-label').style.display = 'none';
+    }
+}
 
 document.getElementById('use-snapshot').addEventListener('click', () => {
     if (newSnapshotData && thumbnailCanvas && thumbnailCtx) {
@@ -701,7 +741,7 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         
         // Move new snapshot to current thumbnail
         const currentThumbnailDiv = document.getElementById('current-thumbnail');
-        currentThumbnailDiv.innerHTML = `<div class="thumbnail-label">Current thumbnail</div><img src="${finalImageData}" alt="Current Thumbnail">`;
+        currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
         
         // Clear new snapshot area
         thumbnailCanvas.classList.remove('active');
@@ -711,13 +751,16 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         // Clear canvas
         thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
         
-        // Hide the button
+        // Hide the button and show the label
         document.getElementById('use-snapshot').style.display = 'none';
+        document.getElementById('current-thumbnail-label').style.display = 'block';
         
-        // Reset state
+        // Reset state - user must interact again to trigger next preview
         newSnapshotData = null;
         thumbnailImage = null;
         thumbnailOffset = { x: 0, y: 0 };
+        isLiveUpdating = false;
+        hasUserInteracted = false;
     }
 });
 
@@ -725,5 +768,11 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
 window.addEventListener('DOMContentLoaded', () => {
     init();
     initThumbnailCanvas();
+    
+    // Set initial active state for grid button (grid starts visible)
+    const gridBtn = document.getElementById('toggle-grid');
+    if (gridBtn) {
+        gridBtn.classList.add('active');
+    }
 });
 
