@@ -158,7 +158,8 @@ header h1 {
     transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 100;
-    display: flex;
+    /* display: flex; */
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 0 12px;
@@ -245,6 +246,22 @@ header h1 {
     100% { transform: rotate(360deg); }
 }
 
+.viewport-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #060606;
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    opacity: 0.50;
+    font-weight: 400;
+    z-index: 100;
+    pointer-events: none;
+    letter-spacing: 0.3px;
+}
+
 
 .thumbnail-section {
     padding: 0px;
@@ -257,6 +274,7 @@ header h1 {
     width: 290px;
     height: 290px;
     background: #121212;
+    border: 1px solid #2a2a2a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -302,7 +320,7 @@ header h1 {
     left: 12px;
     color: white;
     font-size: 24px;
-    /* background-color:rgba(0, 0, 0, 0.5); */
+
     width: 32px;
     text-align: center;
     font-weight: 400;
@@ -317,7 +335,7 @@ header h1 {
 }
 
 .thumbnail-display p {
-    color: #5a6a7a;
+    color: rgba(255, 255, 255, 0.5);
     font-style: italic;
 }
 
@@ -345,21 +363,12 @@ header h1 {
 
 #thumbnail-placeholder {
     display: block;
+    font-size: 14px;
+    text-align: center;
 }
 
 #thumbnail-placeholder.hidden {
     display: none;
-}
-
-.current-label {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    color: #5a6a7a;
-    font-size: 15px;
-    font-weight: 400;
-    z-index: 10;
-    pointer-events: none;
 }
 
 .thumbnail-section .snapshot-btn {
@@ -390,12 +399,13 @@ header h1 {
 }
 
 #current-thumbnail {
+    background: #0c0c0c;
     transition: background 0.25s ease-in-out;
 }
 
 #current-thumbnail.loading {
-    background: #1a1a1a;
-    transition: background 0.35s ease-in-out;
+    background: #111111;
+    transition: background 0.25s ease-in-out;
 }
 
 #current-thumbnail.loading img {
@@ -413,6 +423,25 @@ header h1 {
     font-size: 16px;
     font-weight: 500;
     z-index: 100;
+}
+
+.cancel-btn {
+    width: fit-content;
+    /* max-width: 600px; */
+    padding: 12px 24px;
+    margin-top: 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e0e0e0;
+    background: transparent;
+    border: 1px solid #242424;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+.cancel-btn:hover {
+    color: #ffffff;
+    background: rgba(20, 20, 20, 0.55);
 }
 
 @media (max-width: 1024px) {

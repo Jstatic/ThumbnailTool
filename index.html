@@ -15,6 +15,7 @@
         <div class="main-content">
             <div class="viewer-section">
                 <div id="viewer-container">
+                    <div class="viewport-label">3D Edit</div>
                     <div id="loading-indicator">
                         <div class="loader"></div>
                         <p>Loading 3D Model...</p>
@@ -24,21 +25,23 @@
                     <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
                     <button id="zoom-out" class="zoom-btn" title="Zoom Out">−</button>
                 </div>
+                <button id="cancel-btn" class="cancel-btn">Cancel</button>
             </div>
             
             <div class="thumbnail-section">
                 <div id="new-thumbnail" class="thumbnail-display">
+                    <div class="viewport-label">2D Edit</div>
                     <div id="drag-label" class="thumbnail-label">✥</div>
                     <canvas id="thumbnail-canvas" width="600" height="600"></canvas>
-                    <p id="thumbnail-placeholder">Move around the model to preview</p>
+                    <p id="thumbnail-placeholder">Rotate and zoom<br>the model to preview</p>
                 </div>
                 
                 <div id="current-thumbnail" class="thumbnail-display">
-                    <div id="current-thumbnail-label" class="current-label">Current Thumbnail</div>
+                    <div class="viewport-label">Current</div>
                     <img src="old_thumbnail.png" alt="Current Thumbnail">
                 </div>
                 
-                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Thumbnail</button>
+                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update</button>
             </div>
         </div>
     </div>

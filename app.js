@@ -945,7 +945,6 @@ function showThumbnailCanvas() {
         document.getElementById('thumbnail-placeholder').classList.add('hidden');
         document.getElementById('drag-label').classList.add('visible');
         document.getElementById('use-snapshot').style.display = 'block';
-        document.getElementById('current-thumbnail-label').style.display = 'none';
     }
 }
 
@@ -982,12 +981,6 @@ function clearThumbnailPreview() {
     if (updateBtn) {
         updateBtn.style.display = 'none';
     }
-    
-    // Show current thumbnail label
-    const currentLabel = document.getElementById('current-thumbnail-label');
-    if (currentLabel) {
-        currentLabel.style.display = 'block';
-    }
 }
 
 document.getElementById('use-snapshot').addEventListener('click', () => {
@@ -1011,8 +1004,8 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         
         // After 0.5 seconds, update the thumbnail
         setTimeout(() => {
-            // Update thumbnail content
-            currentThumbnailDiv.innerHTML = `<img src="${finalImageData}" alt="Current Thumbnail">`;
+            // Update thumbnail content (preserve the label)
+            currentThumbnailDiv.innerHTML = `<div class="viewport-label">Current</div><img src="${finalImageData}" alt="Current Thumbnail">`;
             
             // Start fading out the loading background immediately after image appears
             setTimeout(() => {
@@ -1025,6 +1018,21 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
         
         // Keep preview active - don't clear state
         // User can continue to reposition and update again
+    }
+});
+
+// Cancel button functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            cameraPosition = { x: 5, y: 3, z: 8 };
+            targetRotation = { x: 0, y: 0 };
+            currentRotation = { x: 0, y: 0 };
+            
+            // Clear the modified canvas state and preview
+            clearThumbnailPreview();
+        });
     }
 });
 
