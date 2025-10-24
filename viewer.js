@@ -143,7 +143,6 @@ export class Viewer {
 		this.morphCtrls = [];
 		this.skeletonHelpers = [];
 		this.gridHelper = null;
-		this.axesHelper = null;
 
 		this.addAxesHelper();
 		this.addGUI();
@@ -509,16 +508,18 @@ export class Viewer {
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
 				this.gridHelper = new GridHelper();
-				this.axesHelper = new AxesHelper();
-				this.axesHelper.renderOrder = 999;
-				this.axesHelper.onBeforeRender = (renderer) => renderer.clearDepth();
+				// Fix flickering by positioning grid slightly below y=0 and setting render order
+				this.gridHelper.position.y = -0.001;
+				this.gridHelper.renderOrder = 0;
+				this.gridHelper.material.depthWrite = false;
+				// Make grid 50% dimmer
+				this.gridHelper.material.transparent = true;
+				this.gridHelper.material.opacity = 0.5;
+				
 				this.scene.add(this.gridHelper);
-				this.scene.add(this.axesHelper);
 			} else {
 				this.scene.remove(this.gridHelper);
-				this.scene.remove(this.axesHelper);
 				this.gridHelper = null;
-				this.axesHelper = null;
 				this.axesRenderer.clear();
 			}
 		}
