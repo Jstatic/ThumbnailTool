@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	server: {
-		port: 3000,
-		open: true
+		port: 5172,
+		open: true,
+		allowedHosts: ['5172--dev--jleonard--jleonard.devspaces.rbx.com']
 	},
 	build: {
 		outDir: 'dist',
