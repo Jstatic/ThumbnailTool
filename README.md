@@ -8,7 +8,7 @@ A simple web application for creating and comparing thumbnails of 3D models with
 - **Camera Controls**: 
   - Mouse drag to orbit around the model
   - Mouse wheel to zoom in/out
-  - Zoom In/Out buttons
+  - Hold Shift + drag to pan the camera
   - Reset View button
 - **Orientation Indicator**: Mini XYZ axis view in the corner showing camera orientation
 - **Thumbnail Management**: 
@@ -23,7 +23,7 @@ A simple web application for creating and comparing thumbnails of 3D models with
 2. Use your mouse to interact with the 3D model:
    - Click and drag to rotate the camera around the model
    - Use the mouse wheel to zoom in and out
-   - Click the control buttons for precise zoom adjustments
+   - Hold Shift and drag to pan the camera
 3. When you find the desired angle, click "Take Snapshot" to capture the view
 4. The new snapshot will appear in the "New Snapshot" section
 5. Click "Use as Current Thumbnail" to set it as the current thumbnail
@@ -34,6 +34,10 @@ A simple web application for creating and comparing thumbnails of 3D models with
 - CSS3 (Dark Mode Theme)
 - JavaScript
 - Three.js (r128) - 3D graphics library
+
+## Credits
+
+The GLTF viewer environment is based on [three-gltf-viewer](https://github.com/donmccurdy/three-gltf-viewer) by Don McCurdy.
 
 ## Files
 
