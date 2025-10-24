@@ -77,6 +77,21 @@ function populateModelDropdown() {
 	}
 }
 
+// Get the appropriate viewer size based on viewport width
+function getViewerSize() {
+	return window.innerWidth <= 600 ? 360 : 600;
+}
+
+// Update viewer renderer size
+function updateViewerSize() {
+	if (!viewer) return;
+	
+	const size = getViewerSize();
+	viewer.renderer.setSize(size, size);
+	viewer.defaultCamera.aspect = 1;
+	viewer.defaultCamera.updateProjectionMatrix();
+}
+
 // Initialize the viewer
 function init() {
 	const el = document.getElementById('viewer-container');
@@ -88,8 +103,9 @@ function init() {
 		preset: null,
 	});
 	
-	// Force the renderer to the correct size (600x600)
-	viewer.renderer.setSize(600, 600);
+	// Set the renderer to the correct size based on viewport
+	const size = getViewerSize();
+	viewer.renderer.setSize(size, size);
 	viewer.defaultCamera.aspect = 1;
 	viewer.defaultCamera.updateProjectionMatrix();
 	
@@ -568,6 +584,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	init();
 	initThumbnailCanvas();
+	
+	// Add window resize handler to update viewer size
+	window.addEventListener('resize', () => {
+		updateViewerSize();
+	});
 	
 	// Enable live updating immediately
 	isLiveUpdating = true;

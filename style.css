@@ -39,14 +39,6 @@ header h1 {
     margin-right: 20px;
 }
 
-.model-controls-label {
-    color: #7e7e7e;
-    font-size: 15px;
-    margin-right: 8px;
-    font-weight: 400;
-    white-space: nowrap;
-}
-
 .file-upload-input {
     display: none;
 }
@@ -479,9 +471,11 @@ header .model-selector:focus {
     transition: opacity 0.2s, box-shadow 0.2s;
 }
 
+/* Uncomment if needed in the future
 #new-thumbnail.interacting::after {
-    /* opacity: 0.35; */
+    opacity: 0.35;
 }
+*/
 
 .thumbnail-label {
     position: absolute;
@@ -578,9 +572,17 @@ header .model-selector:focus {
     display: none;
 }
 
-.thumbnail-section .snapshot-btn {
-    width: 100%;
-    max-width: 290px;
+.button-container {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 20px;
+    max-width: 930px;
+    margin: 20px auto 0 auto;
+}
+
+.snapshot-btn {
     padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
@@ -591,7 +593,6 @@ header .model-selector:focus {
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     box-shadow: 0 4px 15px rgba(200, 80, 192, 0.4);
-    margin-bottom: 0;
     flex-shrink: 0;
 }
 
@@ -632,10 +633,7 @@ header .model-selector:focus {
 }
 
 .cancel-btn {
-    width: fit-content;
-    /* max-width: 600px; */
     padding: 12px 24px;
-    margin-top: 20px;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
@@ -644,6 +642,7 @@ header .model-selector:focus {
     border: 1px solid #242424;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
+    flex-shrink: 0;
 }
 .cancel-btn:hover {
     color: #ffffff;
@@ -677,6 +676,72 @@ header .model-selector:focus {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
         overflow-y: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        max-width: 340px;
+        margin-top: 12px;
+    }
+
+    .main-content {
+        max-width: 340px;
+    }
+    .viewport-label {
+        display: none;
+    }
+    header h1 {
+        width: 100%;
+    }
+
+    .model-selector {
+        flex-grow: 1;
+    }
+
+    .model-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #viewer-container {
+        width: 340px;
+        height: 340px;
+        margin-bottom: 20px
+    }
+
+    #viewer-container > canvas {
+        width: 340px !important;
+        height: 340px !important;
+    }
+
+    .thumbnail-section {
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .thumbnail-display {
+        width: 160px;
+        height: 160px;
+    }
+
+    #new-thumbnail {
+        width: 160px;
+        height: 160px;
+    }
+    .button-container {
+        max-width: 340px;
+        padding-right: 0px;
+    }
+.snapshot-btn {
+    flex-grow:1;
+}
+    #thumbnail-canvas {
+        width: 170px;
+        height: 170px;
     }
 }
 

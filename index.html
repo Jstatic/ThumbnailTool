@@ -11,7 +11,6 @@
         <header>
             <h1>GLTF Thumbnail Editor</h1>
             <div class="model-controls">
-                <span class="model-controls-label">Choose model</span>
                 <select id="model-selector" class="model-selector">
                     <!-- Options populated dynamically from assets folder -->
                 </select>
@@ -41,7 +40,6 @@
                     <button id="zoom-out" class="zoom-btn" title="Zoom Out">−</button>
                     <input type="range" id="light-intensity" class="lighting-slider" min="0" max="200" value="100" step="1">
                 </div>
-                <button id="cancel-btn" class="cancel-btn">Reset</button>
             </div>
             
             <div class="thumbnail-section">
@@ -62,9 +60,12 @@
                         </svg>
                     </button>
                 </div>
-                
-                <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Preview</button>
             </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="cancel-btn" class="cancel-btn">Reset</button>
+            <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Preview</button>
         </div>
     </div>
     
