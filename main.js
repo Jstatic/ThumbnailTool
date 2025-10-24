@@ -1,6 +1,9 @@
 import { Viewer } from './viewer.js';
 import { Box3, Vector3 } from 'three';
 
+// Discover all GLTF models in assets folder using Vite's glob import
+const modelFiles = import.meta.glob('./assets/*.gltf', { eager: false, as: 'url' });
+
 // Application state
 let viewer;
 let currentModelUrl = 'assets/Turkey.gltf';
@@ -22,6 +25,45 @@ let hasUserInteracted = false;
 let thumbnailInteractionTimeout = null;
 let isThumbnailInteracting = false;
 let newSnapshotData = null;
+
+// 3D viewer interaction state
+let isViewerInteracting = false;
+
+// Populate model dropdown from discovered files
+function populateModelDropdown() {
+	const modelSelector = document.getElementById('model-selector');
+	if (!modelSelector) return;
+	
+	// Clear existing options
+	modelSelector.innerHTML = '';
+	
+	// Get model paths and sort them alphabetically
+	const modelPaths = Object.keys(modelFiles).sort();
+	
+	console.log('Discovered models:', modelPaths);
+	
+	// Add each model as an option
+	modelPaths.forEach(path => {
+		// Extract filename without path and extension for display
+		const filename = path.split('/').pop();
+		const displayName = filename.replace('.gltf', '');
+		
+		// Convert path to relative assets path
+		const assetPath = path.replace('./', '');
+		
+		const option = document.createElement('option');
+		option.value = assetPath;
+		option.textContent = displayName;
+		modelSelector.appendChild(option);
+	});
+	
+	// Set the first model as default if available
+	if (modelPaths.length > 0) {
+		const firstModel = modelPaths[0].replace('./', '');
+		currentModelUrl = firstModel;
+		modelSelector.value = firstModel;
+	}
+}
 
 // Initialize the viewer
 function init() {
@@ -107,10 +149,28 @@ function loadModel(modelUrl) {
 function onControlsStart() {
 	enableLiveUpdating();
 	showUpdateButton();
+	
+	// Add interacting class to viewer container for drop shadow effect
+	if (!isViewerInteracting) {
+		const viewerContainer = document.getElementById('viewer-container');
+		if (viewerContainer) {
+			viewerContainer.classList.add('interacting');
+			isViewerInteracting = true;
+		}
+	}
 }
 
 function onControlsEnd() {
 	// Keep live updating enabled after interaction
+	
+	// Remove interacting class from viewer container
+	if (isViewerInteracting) {
+		const viewerContainer = document.getElementById('viewer-container');
+		if (viewerContainer) {
+			viewerContainer.classList.remove('interacting');
+			isViewerInteracting = false;
+		}
+	}
 }
 
 // Enable live updating on first user interaction
@@ -315,6 +375,8 @@ function showThumbnailCanvas() {
 
 // Clear the thumbnail preview
 function clearThumbnailPreview() {
+	console.log('Clearing thumbnail preview...');
+	
 	newSnapshotData = null;
 	thumbnailImage = null;
 	thumbnailOffset = { x: 0, y: 0 };
@@ -331,21 +393,52 @@ function clearThumbnailPreview() {
 	const placeholder = document.getElementById('thumbnail-placeholder');
 	if (placeholder) {
 		placeholder.classList.remove('hidden');
+		placeholder.style.display = 'block';
 	}
 	
 	const dragLabel = document.getElementById('drag-label');
 	if (dragLabel) {
 		dragLabel.classList.remove('visible');
+		dragLabel.style.display = 'none';
 	}
 	
 	const updateBtn = document.getElementById('use-snapshot');
 	if (updateBtn) {
 		updateBtn.style.display = 'none';
 	}
+	
+	// Clear the current thumbnail image
+	const currentThumbnailDiv = document.getElementById('current-thumbnail');
+	if (currentThumbnailDiv) {
+		const img = currentThumbnailDiv.querySelector('img');
+		if (img) {
+			img.src = '';
+			img.style.display = 'none';
+		}
+	}
+	
+	console.log('Thumbnail preview cleared');
+}
+
+// Reset lighting slider to default
+function resetLightingSlider() {
+	const lightIntensitySlider = document.getElementById('light-intensity');
+	if (lightIntensitySlider && viewer) {
+		// Reset slider to default value (100%)
+		lightIntensitySlider.value = 100;
+		
+		// Reset viewer lighting to base values
+		viewer.state.ambientIntensity = 0.3;
+		viewer.state.directIntensity = 0.8 * Math.PI;
+		viewer.updateLights();
+	}
 }
 
 // Button controls
 document.addEventListener('DOMContentLoaded', () => {
+	// Populate model dropdown first
+	populateModelDropdown();
+	
 	init();
 	initThumbnailCanvas();
 	
@@ -379,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('cancel-btn').addEventListener('click', () => {
 		viewer.controls.reset();
 		clearThumbnailPreview();
+		resetLightingSlider();
 	});
 	
 	// Use snapshot button
@@ -421,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			const selectedModel = event.target.value;
 			console.log('Model changed to:', selectedModel);
 			loadModel(selectedModel);
+			resetLightingSlider();
 		});
 	}
 	
@@ -428,6 +523,25 @@ document.addEventListener('DOMContentLoaded', () => {
 	const gridBtn = document.getElementById('toggle-grid');
 	if (gridBtn) {
 		gridBtn.classList.add('active');
+	}
+	
+	// Lighting intensity slider
+	const lightIntensitySlider = document.getElementById('light-intensity');
+	if (lightIntensitySlider) {
+		// Store base lighting values
+		const baseAmbientIntensity = viewer.state.ambientIntensity;
+		const baseDirectIntensity = viewer.state.directIntensity;
+		
+		lightIntensitySlider.addEventListener('input', (event) => {
+			const multiplier = event.target.value / 100; // Convert 0-200 to 0-2
+			
+			// Update lighting intensities
+			viewer.state.ambientIntensity = baseAmbientIntensity * multiplier;
+			viewer.state.directIntensity = baseDirectIntensity * multiplier;
+			
+			// Apply the changes
+			viewer.updateLights();
+		});
 	}
 });
 

@@ -59,6 +59,9 @@ header h1 {
     cursor: grab;
     --glow-opacity: 0;
     --glow-blur: 0px;
+    --shadow-spread: 0px;
+    box-shadow: 0 4px var(--shadow-spread) rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.2s ease;
 }
 
 #viewer-container::before {
@@ -73,11 +76,15 @@ header h1 {
     opacity: var(--glow-opacity);
     pointer-events: none;
     transition: opacity 0.2s ease, box-shadow 0.2s ease;
+    z-index: 10;
+    will-change: opacity, box-shadow;
 }
 
 #viewer-container.interacting {
     --glow-opacity: 1;
     --glow-blur: 12px;
+    --shadow-spread: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #viewer-container.interacting::before {
@@ -201,6 +208,53 @@ header h1 {
 .zoom-btn:hover {
     box-shadow: 0 6px 20px rgba(80, 80, 80, 0.6);
     background: rgba(80, 80, 80, 0.9);
+}
+
+.lighting-slider {
+    position: absolute !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 100;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(to right, #2a2a2a 0%, #ffffff 100%);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.lighting-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.lighting-slider::-webkit-slider-thumb:hover {
+    background: #ffffff;
+    transform: scale(1.1);
+}
+
+.lighting-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #e0e0e0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.lighting-slider::-moz-range-thumb:hover {
+    background: #ffffff;
+    transform: scale(1.1);
 }
 
 #loading-indicator {

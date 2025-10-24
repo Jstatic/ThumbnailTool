@@ -11,10 +11,7 @@
         <header>
             <h1>GLTF Thumbnail Editor</h1>
             <select id="model-selector" class="model-selector">
-                <option value="assets/Turkey.gltf">Turkey</option>
-                <option value="assets/TurkeySm.gltf">Turkey Small</option>
-                <option value="assets/Truck.gltf">Truck</option>
-                <option value="assets/Part.gltf">Part</option>
+                <!-- Options populated dynamically from assets folder -->
             </select>
         </header>
         
@@ -30,6 +27,7 @@
                     <button id="reset-view" class="reset-view-btn" title="Reset View">Reset ↺</button>
                     <button id="zoom-in" class="zoom-btn" title="Zoom In">+</button>
                     <button id="zoom-out" class="zoom-btn" title="Zoom Out">−</button>
+                    <input type="range" id="light-intensity" class="lighting-slider" min="0" max="200" value="100" step="1">
                 </div>
                 <button id="cancel-btn" class="cancel-btn">Cancel</button>
             </div>

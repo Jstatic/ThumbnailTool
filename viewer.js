@@ -3,11 +3,16 @@ import {
 	AnimationMixer,
 	AxesHelper,
 	Box3,
+	BufferGeometry,
 	Cache,
 	Color,
 	DirectionalLight,
+	Float32BufferAttribute,
 	GridHelper,
+	Group,
 	HemisphereLight,
+	LineBasicMaterial,
+	LineSegments,
 	LoaderUtils,
 	LoadingManager,
 	PMREMGenerator,
@@ -169,7 +174,13 @@ export class Viewer {
 	render() {
 		this.renderer.render(this.scene, this.activeCamera);
 		if (this.state.grid) {
-			this.axesCamera.position.copy(this.defaultCamera.position);
+			// Update axes camera to match main camera orientation but keep fixed distance
+			const distance = 5; // Fixed distance for consistent axes size
+			// Get normalized direction from camera position
+			const direction = this.defaultCamera.position.clone().normalize();
+			// Position axes camera at fixed distance from origin
+			this.axesCamera.position.copy(direction.multiplyScalar(distance));
+			// Make axes camera look at the origin
 			this.axesCamera.lookAt(this.axesScene.position);
 			this.axesRenderer.render(this.axesScene, this.axesCamera);
 		}
@@ -316,8 +327,7 @@ export class Viewer {
 		this.controls.target.set(0, modelCenterY, 0);
 		this.controls.update();
 
-		this.axesCamera.position.copy(this.defaultCamera.position);
-		this.axesCamera.lookAt(this.axesScene.position);
+		// Configure axes camera with fixed near/far for consistent rendering
 		this.axesCamera.near = 0.1;
 		this.axesCamera.far = 10;
 		this.axesCamera.updateProjectionMatrix();
@@ -557,10 +567,37 @@ export class Viewer {
 
 		this.axesCamera.up = this.defaultCamera.up;
 
-		// Create shorter axes (2.5 instead of 5)
-		this.axesCorner = new AxesHelper(2.5);
-		// Make the axes lines thicker
-		this.axesCorner.material.linewidth = 3;
+		// Create custom axes with uniform shorter lengths
+		const xLength = 1.8;
+		const yLength = 1.8;
+		const zLength = 1.8;
+		
+		this.axesCorner = new Group();
+		
+		// X axis (red)
+		const xGeometry = new BufferGeometry();
+		xGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, xLength, 0, 0], 3));
+		xGeometry.setAttribute('color', new Float32BufferAttribute([1, 0, 0, 1, 0, 0], 3));
+		const xMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+		const xAxis = new LineSegments(xGeometry, xMaterial);
+		this.axesCorner.add(xAxis);
+		
+		// Y axis (green)
+		const yGeometry = new BufferGeometry();
+		yGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, yLength, 0], 3));
+		yGeometry.setAttribute('color', new Float32BufferAttribute([0, 1, 0, 0, 1, 0], 3));
+		const yMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+		const yAxis = new LineSegments(yGeometry, yMaterial);
+		this.axesCorner.add(yAxis);
+		
+		// Z axis (blue)
+		const zGeometry = new BufferGeometry();
+		zGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, zLength], 3));
+		zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0, 1, 0, 0, 1], 3));
+		const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+		const zAxis = new LineSegments(zGeometry, zMaterial);
+		this.axesCorner.add(zAxis);
+		
 		this.axesScene.add(this.axesCorner);
 		this.axesDiv.appendChild(this.axesRenderer.domElement);
 	}
