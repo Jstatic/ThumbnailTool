@@ -131,12 +131,6 @@ export class Viewer {
 
 		this.controls = new OrbitControls(this.defaultCamera, this.renderer.domElement);
 		this.controls.screenSpacePanning = true;
-		
-		// Log camera position when view is moved
-		this.controls.addEventListener('change', () => {
-			const pos = this.defaultCamera.position;
-			console.log('Camera position:', pos.x.toFixed(2), pos.y.toFixed(2), pos.z.toFixed(2));
-		});
 
 		this.el.appendChild(this.renderer.domElement);
 
@@ -517,22 +511,22 @@ export class Viewer {
 
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
-				this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
-				// Fix flickering with multiple strategies:
-				// 1. Position grid below y=0 to avoid z-fighting
-				this.gridHelper.position.y = -0.02;
-				// 2. Render grid before other objects (lower renderOrder renders first)
-				this.gridHelper.renderOrder = -1000;
-				// 3. Configure material to prevent depth conflicts
-				this.gridHelper.material.depthWrite = false;
-				this.gridHelper.material.depthTest = true;
-				// 4. Use polygon offset to push grid slightly back in depth
-				this.gridHelper.material.polygonOffset = true;
-				this.gridHelper.material.polygonOffsetFactor = 1.0;
-				this.gridHelper.material.polygonOffsetUnits = 1.0;
-				// 5. Make grid semi-transparent for better blending
-				this.gridHelper.material.transparent = true;
-				this.gridHelper.material.opacity = 0.5;
+			this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
+			// Fix flickering with multiple strategies:
+			// 1. Position grid below y=0 to avoid z-fighting
+			this.gridHelper.position.y = -0.05;
+			// 2. Render grid before other objects (lower renderOrder renders first)
+			this.gridHelper.renderOrder = -1000;
+			// 3. Configure material to prevent depth conflicts
+			this.gridHelper.material.depthWrite = false;
+			this.gridHelper.material.depthTest = true;
+			// 4. Use polygon offset to push grid significantly back in depth buffer
+			this.gridHelper.material.polygonOffset = true;
+			this.gridHelper.material.polygonOffsetFactor = 2.0;
+			this.gridHelper.material.polygonOffsetUnits = 4.0;
+			// 5. Make grid semi-transparent for better blending
+			this.gridHelper.material.transparent = true;
+			this.gridHelper.material.opacity = 0.5;
 				
 				this.scene.add(this.gridHelper);
 			} else {

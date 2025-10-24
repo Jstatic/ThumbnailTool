@@ -130,9 +130,8 @@ function loadModel(modelUrl) {
 	// Load the model
 	viewer.load(modelUrl, '', new Map())
 		.then((gltf) => {
-			console.log('Model loaded successfully:', modelUrl, gltf);
-			console.log('Scene content:', viewer.content);
-			console.log('Camera position:', viewer.defaultCamera.position);
+		console.log('Model loaded successfully:', modelUrl, gltf);
+		console.log('Scene content:', viewer.content);
 			
 			// Hide loading indicator
 			if (loadingIndicator) {
@@ -141,6 +140,14 @@ function loadModel(modelUrl) {
 			
 			// Trigger display update
 			viewer.updateDisplay();
+			
+			// Enable live updating and force initial thumbnail capture
+			isLiveUpdating = true;
+			hasUserInteracted = true;
+			setTimeout(() => {
+				lastThumbnailUpdate = 0;
+				updateThumbnailFromViewport();
+			}, 200);
 		})
 		.catch((error) => {
 			console.error('Error loading model:', error);
@@ -252,9 +259,19 @@ function initThumbnailCanvas() {
 	thumbnailCanvas = document.getElementById('thumbnail-canvas');
 	thumbnailCtx = thumbnailCanvas.getContext('2d');
 	
+	// Draw initial background
+	thumbnailCtx.fillStyle = '#121212';
+	thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+	
 	// Load guides image
 	guidesImage = new Image();
 	guidesImage.src = 'Guides.png';
+	guidesImage.onload = () => {
+		// Draw guides once loaded
+		thumbnailCtx.globalAlpha = 0.5;
+		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+		thumbnailCtx.globalAlpha = 1.0;
+	};
 	
 	// Add event listeners for dragging
 	thumbnailCanvas.addEventListener('mousedown', onThumbnailMouseDown);
@@ -368,13 +385,12 @@ function onThumbnailWheel(event) {
 	renderThumbnail();
 }
 
-// Show thumbnail canvas
+// Show thumbnail canvas (canvas is visible from start)
 function showThumbnailCanvas() {
-	if (thumbnailCanvas && !thumbnailCanvas.classList.contains('active')) {
-		thumbnailCanvas.classList.add('active');
-		document.getElementById('thumbnail-placeholder').classList.add('hidden');
-		document.getElementById('drag-label').classList.add('visible');
-		document.getElementById('use-snapshot').style.display = 'block';
+	// Canvas is already active from start, just show the update button
+	const btn = document.getElementById('use-snapshot');
+	if (btn && thumbnailImage) {
+		btn.style.display = 'block';
 	}
 }
 
@@ -382,30 +398,8 @@ function showThumbnailCanvas() {
 function clearThumbnailPreview() {
 	console.log('Clearing thumbnail preview...');
 	
-	newSnapshotData = null;
-	thumbnailImage = null;
 	thumbnailOffset = { x: 0, y: 0 };
 	thumbnailScale = 1.0;
-	isLiveUpdating = false;
-	hasUserInteracted = false;
-	lastThumbnailUpdate = 0;
-	
-	if (thumbnailCanvas && thumbnailCtx) {
-		thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-		thumbnailCanvas.classList.remove('active');
-	}
-	
-	const placeholder = document.getElementById('thumbnail-placeholder');
-	if (placeholder) {
-		placeholder.classList.remove('hidden');
-		placeholder.style.display = 'block';
-	}
-	
-	const dragLabel = document.getElementById('drag-label');
-	if (dragLabel) {
-		dragLabel.classList.remove('visible');
-		dragLabel.style.display = 'none';
-	}
 	
 	const updateBtn = document.getElementById('use-snapshot');
 	if (updateBtn) {
@@ -429,6 +423,7 @@ function clearThumbnailPreview() {
 		downloadBtn.dataset.imageData = '';
 	}
 	
+	// Keep live updating active - thumbnail canvas continues showing live view
 	console.log('Thumbnail preview cleared');
 }
 
@@ -499,6 +494,14 @@ function handleFileUpload(event) {
 			
 			// Update current model URL reference
 			currentModelUrl = fileURL;
+			
+			// Enable live updating and force initial thumbnail capture
+			isLiveUpdating = true;
+			hasUserInteracted = true;
+			setTimeout(() => {
+				lastThumbnailUpdate = 0;
+				updateThumbnailFromViewport();
+			}, 200);
 		})
 		.catch((error) => {
 			console.error('Error loading uploaded model:', error);
@@ -527,6 +530,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	init();
 	initThumbnailCanvas();
+	
+	// Enable live updating immediately
+	isLiveUpdating = true;
+	hasUserInteracted = true;
 	
 	// Grid toggle
 	document.getElementById('toggle-grid').addEventListener('click', () => {

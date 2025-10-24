@@ -568,6 +568,10 @@ header .model-selector:focus {
     transition: background 0.25s ease-in-out;
 }
 
+#current-thumbnail:has(img[style*="block"]) {
+    background: radial-gradient(circle at center, #202020 0%, #0a0a0a 70%);
+}
+
 #current-thumbnail.loading {
     background: #111111;
     transition: background 0.25s ease-in-out;

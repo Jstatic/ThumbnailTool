@@ -197,6 +197,16 @@ function loadModel(modelUrl) {
                     }
                 }
             });
+            
+            // Start live updating as soon as model loads
+            enableLiveUpdating();
+            
+            // Force immediate thumbnail update after render
+            setTimeout(() => {
+                console.log('Forcing initial thumbnail update...');
+                lastThumbnailUpdate = 0; // Reset throttle
+                updateThumbnailFromViewport();
+            }, 200);
         },
         function (xhr) {
             const percent = xhr.total > 0 ? (xhr.loaded / xhr.total * 100) : 0;
@@ -225,15 +235,15 @@ function createGridPlane() {
     const divisions = 10; // Reduced from 20 for wider subdivisions
     
     gridHelper = new THREE.GridHelper(size, divisions, 0x4a4a4a, 0x2a2a2a);
-    gridHelper.position.set(0, -0.02, 0);
+    gridHelper.position.set(0, -0.05, 0);
     
     // Configure material to prevent z-fighting (from three-gltf-viewer)
     gridHelper.material.depthWrite = false;
     gridHelper.material.depthTest = true;
-    // Use polygon offset to push grid slightly back in depth buffer
+    // Use polygon offset to push grid significantly back in depth buffer
     gridHelper.material.polygonOffset = true;
-    gridHelper.material.polygonOffsetFactor = 1.0;
-    gridHelper.material.polygonOffsetUnits = 1.0;
+    gridHelper.material.polygonOffsetFactor = 2.0;
+    gridHelper.material.polygonOffsetUnits = 4.0;
     gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
     gridHelper.renderOrder = -1000; // Render before other objects
@@ -476,11 +486,21 @@ function createEnhancedCarModel() {
     carGroup.position.z = -center.z;
     
     console.log('Fallback model centered:', { center, position: carGroup.position });
+    
+    // Start live updating as soon as fallback model loads
+    enableLiveUpdating();
+    
+    // Force immediate thumbnail update after render
+    setTimeout(() => {
+        console.log('Forcing initial thumbnail update (fallback)...');
+        lastThumbnailUpdate = 0; // Reset throttle
+        updateThumbnailFromViewport();
+    }, 200);
 }
 
-// Enable live updating on first user interaction
+// Enable live updating (starts when model loads or on user interaction)
 function enableLiveUpdating() {
-    if (!hasUserInteracted) {
+    if (!isLiveUpdating) {
         hasUserInteracted = true;
         isLiveUpdating = true;
     }
@@ -554,12 +574,19 @@ function onWindowResize() {
 
 // Update thumbnail with current 3D view
 function updateThumbnailFromViewport() {
-    if (!isLiveUpdating || !thumbnailCanvas || !thumbnailCtx) return;
+    if (!isLiveUpdating || !thumbnailCanvas || !thumbnailCtx) {
+        console.log('updateThumbnailFromViewport blocked:', { isLiveUpdating, hasCanvas: !!thumbnailCanvas, hasCtx: !!thumbnailCtx });
+        return;
+    }
     
     // Throttle updates to avoid performance issues
     const now = Date.now();
-    if (now - lastThumbnailUpdate < THUMBNAIL_UPDATE_INTERVAL) return;
+    if (now - lastThumbnailUpdate < THUMBNAIL_UPDATE_INTERVAL) {
+        // console.log('Throttled'); // Uncomment for debugging
+        return;
+    }
     lastThumbnailUpdate = now;
+    console.log('Capturing viewport snapshot...');
     
     // Temporarily set background to transparent for the snapshot
     const originalBackground = scene.background;
@@ -593,6 +620,7 @@ function updateThumbnailFromViewport() {
     // Load image and update display (preserve offset!)
     thumbnailImage = new Image();
     thumbnailImage.onload = () => {
+        console.log('Thumbnail image loaded, rendering...');
         // Show canvas on first update
         showThumbnailCanvas();
         
@@ -601,6 +629,7 @@ function updateThumbnailFromViewport() {
         renderThumbnail();
     };
     thumbnailImage.src = imageData;
+    console.log('Thumbnail image loading...');
 }
 
 // Animation loop
@@ -681,12 +710,33 @@ document.getElementById('toggle-grid').addEventListener('click', () => {
 
 // Initialize thumbnail canvas
 function initThumbnailCanvas() {
+    console.log('initThumbnailCanvas called');
     thumbnailCanvas = document.getElementById('thumbnail-canvas');
+    console.log('Found canvas element:', !!thumbnailCanvas);
+    
+    if (!thumbnailCanvas) {
+        console.error('Thumbnail canvas not found!');
+        return;
+    }
+    
     thumbnailCtx = thumbnailCanvas.getContext('2d');
+    console.log('Got 2D context:', !!thumbnailCtx);
+    
+    // Draw initial background
+    thumbnailCtx.fillStyle = '#121212';
+    thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+    console.log('Drew initial background');
     
     // Load guides image
     guidesImage = new Image();
     guidesImage.src = 'Guides.png';
+    guidesImage.onload = () => {
+        console.log('Guides image loaded');
+        // Draw guides once loaded
+        thumbnailCtx.globalAlpha = 0.3;
+        thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+        thumbnailCtx.globalAlpha = 1.0;
+    };
     
     // Add event listeners for dragging
     thumbnailCanvas.addEventListener('mousedown', onThumbnailMouseDown);
@@ -696,6 +746,7 @@ function initThumbnailCanvas() {
     
     // Add event listener for resizing with mouse wheel
     thumbnailCanvas.addEventListener('wheel', onThumbnailWheel);
+    console.log('Thumbnail canvas initialized');
 }
 
 // Render thumbnail to canvas
@@ -841,43 +892,20 @@ function onThumbnailWheel(event) {
     }, 200);
 }
 
-// Auto-show thumbnail canvas on first update
+// Show thumbnail canvas (canvas is visible from start)
 function showThumbnailCanvas() {
-    if (thumbnailCanvas && !thumbnailCanvas.classList.contains('active')) {
-        thumbnailCanvas.classList.add('active');
-        document.getElementById('thumbnail-placeholder').classList.add('hidden');
-        document.getElementById('drag-label').classList.add('visible');
-        document.getElementById('use-snapshot').style.display = 'block';
+    // Canvas is already active from start, just show the update button
+    const btn = document.getElementById('use-snapshot');
+    if (btn && thumbnailImage) {
+        btn.style.display = 'block';
     }
 }
 
 // Clear the modified canvas state and preview
 function clearThumbnailPreview() {
-    // Reset state variables first
-    newSnapshotData = null;
-    thumbnailImage = null;
+    // Reset state variables
     thumbnailOffset = { x: 0, y: 0 };
     thumbnailScale = 1.0;
-    isLiveUpdating = false;
-    hasUserInteracted = false;
-    lastThumbnailUpdate = 0;
-    
-    // Clear and hide canvas
-    if (thumbnailCanvas && thumbnailCtx) {
-        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-        thumbnailCanvas.classList.remove('active');
-    }
-    
-    // Show placeholder, hide drag label
-    const placeholder = document.getElementById('thumbnail-placeholder');
-    if (placeholder) {
-        placeholder.classList.remove('hidden');
-    }
-    
-    const dragLabel = document.getElementById('drag-label');
-    if (dragLabel) {
-        dragLabel.classList.remove('visible');
-    }
     
     // Hide update button
     const updateBtn = document.getElementById('use-snapshot');
@@ -900,6 +928,8 @@ function clearThumbnailPreview() {
         downloadBtn.style.display = 'none';
         downloadBtn.dataset.imageData = '';
     }
+    
+    // Keep live updating active - thumbnail canvas continues showing live view
 }
 
 document.getElementById('use-snapshot').addEventListener('click', () => {
@@ -1003,8 +1033,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize when DOM is loaded
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing...');
     init();
     initThumbnailCanvas();
+    
+    console.log('Initialization complete. Canvas:', !!thumbnailCanvas, 'Context:', !!thumbnailCtx);
+    
+    // Enable live updating immediately (don't wait for model to load)
+    isLiveUpdating = true;
+    hasUserInteracted = true;
+    console.log('Live updating enabled on page load');
+    
+    // Force an immediate update after a short delay to let everything settle
+    setTimeout(() => {
+        console.log('Forcing update after init. isLiveUpdating:', isLiveUpdating, 'Canvas:', !!thumbnailCanvas, 'Ctx:', !!thumbnailCtx);
+        lastThumbnailUpdate = 0;
+        updateThumbnailFromViewport();
+    }, 500);
     
     // Set initial active state for grid button (grid starts visible)
     const gridBtn = document.getElementById('toggle-grid');
