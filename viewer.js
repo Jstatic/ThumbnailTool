@@ -590,15 +590,18 @@ export class Viewer {
 		const yAxis = new LineSegments(yGeometry, yMaterial);
 		this.axesCorner.add(yAxis);
 		
-		// Z axis (blue)
-		const zGeometry = new BufferGeometry();
-		zGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, zLength], 3));
-		zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0, 1, 0, 0, 1], 3));
-		const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
-		const zAxis = new LineSegments(zGeometry, zMaterial);
-		this.axesCorner.add(zAxis);
-		
-		this.axesScene.add(this.axesCorner);
+	// Z axis (blue)
+	const zGeometry = new BufferGeometry();
+	zGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, zLength], 3));
+	zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0, 1, 0, 0, 1], 3));
+	const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+	const zAxis = new LineSegments(zGeometry, zMaterial);
+	this.axesCorner.add(zAxis);
+	
+	// Rotate axes indicator 180° on Y axis to show from the other side
+	this.axesCorner.rotation.y = Math.PI;
+	
+	this.axesScene.add(this.axesCorner);
 		this.axesDiv.appendChild(this.axesRenderer.domElement);
 	}
 

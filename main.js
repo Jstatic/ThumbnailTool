@@ -6,7 +6,7 @@ const modelFiles = import.meta.glob('./assets/*.gltf', { eager: false, as: 'url'
 
 // Application state
 let viewer;
-let currentModelUrl = 'assets/Turkey.gltf';
+let currentModelUrl = 'assets/Truck.gltf';
 
 // Canvas thumbnail state
 let thumbnailCanvas = null;
@@ -57,8 +57,13 @@ function populateModelDropdown() {
 		modelSelector.appendChild(option);
 	});
 	
-	// Set the first model as default if available
-	if (modelPaths.length > 0) {
+	// Set Truck as default if available, otherwise use the first model
+	const truckPath = modelPaths.find(path => path.includes('Truck.gltf'));
+	if (truckPath) {
+		const truckAssetPath = truckPath.replace('./', '');
+		currentModelUrl = truckAssetPath;
+		modelSelector.value = truckAssetPath;
+	} else if (modelPaths.length > 0) {
 		const firstModel = modelPaths[0].replace('./', '');
 		currentModelUrl = firstModel;
 		modelSelector.value = firstModel;
@@ -434,6 +439,80 @@ function resetLightingSlider() {
 	}
 }
 
+// Handle file upload
+function handleFileUpload(event) {
+	const files = Array.from(event.target.files);
+	if (!files || files.length === 0) return;
+	
+	console.log('Files uploaded:', files.map(f => f.name).join(', '));
+	
+	// Find the main GLTF/GLB file
+	let mainFile = null;
+	const assetMap = new Map();
+	
+	for (const file of files) {
+		const fileName = file.name.toLowerCase();
+		
+		if ((fileName.endsWith('.gltf') || fileName.endsWith('.glb')) && !mainFile) {
+			mainFile = file;
+		} else {
+			// Add other files (textures, .bin files, etc.) to the asset map
+			// The asset map maps file names to File/Blob objects
+			assetMap.set(file.name, file);
+		}
+	}
+	
+	if (!mainFile) {
+		alert('Please upload at least one GLTF (.gltf) or GLB (.glb) file');
+		return;
+	}
+	
+	console.log('Main file:', mainFile.name);
+	console.log('Asset map:', Array.from(assetMap.keys()));
+	
+	// Create object URL for the main file
+	const fileURL = URL.createObjectURL(mainFile);
+	
+	console.log('Loading uploaded model from:', fileURL);
+	
+	// Load the uploaded model with the asset map
+	// The viewer.load() function accepts a rootPath and assetMap parameter
+	viewer.load(fileURL, '', assetMap)
+		.then((gltf) => {
+			console.log('Uploaded model loaded successfully:', mainFile.name, gltf);
+			
+			// Hide loading indicator
+			const loadingIndicator = document.getElementById('loading-indicator');
+			if (loadingIndicator) {
+				loadingIndicator.style.display = 'none';
+			}
+			
+			// Clear the thumbnail preview
+			clearThumbnailPreview();
+			
+			// Update current model URL reference
+			currentModelUrl = fileURL;
+		})
+		.catch((error) => {
+			console.error('Error loading uploaded model:', error);
+			alert('Error loading model: ' + error.message);
+			
+			const loadingIndicator = document.getElementById('loading-indicator');
+			if (loadingIndicator) {
+				loadingIndicator.style.display = 'none';
+			}
+		});
+	
+	// Clear the model selector since we're loading a custom file
+	const modelSelector = document.getElementById('model-selector');
+	if (modelSelector) {
+		modelSelector.value = '';
+	}
+	
+	// Reset lighting after upload
+	resetLightingSlider();
+}
+
 // Button controls
 document.addEventListener('DOMContentLoaded', () => {
 	// Populate model dropdown first
@@ -523,6 +602,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	const gridBtn = document.getElementById('toggle-grid');
 	if (gridBtn) {
 		gridBtn.classList.add('active');
+	}
+	
+	// File upload handler
+	const fileUploadInput = document.getElementById('file-upload');
+	if (fileUploadInput) {
+		fileUploadInput.addEventListener('change', handleFileUpload);
 	}
 	
 	// Lighting intensity slider

@@ -10,9 +10,13 @@
     <div class="container">
         <header>
             <h1>GLTF Thumbnail Editor</h1>
-            <select id="model-selector" class="model-selector">
-                <!-- Options populated dynamically from assets folder -->
-            </select>
+            <div class="model-controls">
+                <label for="file-upload" class="file-upload-label">Upload GLTF</label>
+                <input type="file" id="file-upload" class="file-upload-input" accept=".gltf,.glb" multiple />
+                <select id="model-selector" class="model-selector">
+                    <!-- Options populated dynamically from assets folder -->
+                </select>
+            </div>
         </header>
         
         <div class="main-content">

@@ -32,6 +32,40 @@ header h1 {
     font-weight: 600;
 }
 
+.model-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: 20px;
+}
+
+.file-upload-input {
+    display: none;
+}
+
+.file-upload-label {
+    background: rgba(40, 40, 40, 0.95);
+    color: #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 400;
+    border: 1px solid #505050;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+}
+
+.file-upload-label:hover {
+    background: rgba(60, 60, 60, 0.95);
+    box-shadow: 0 4px 12px rgba(80, 80, 80, 0.6);
+}
+
+.file-upload-label:active {
+    transform: translateY(1px);
+}
+
 .main-content {
     display: grid;
     grid-template-columns: auto auto;
@@ -61,7 +95,7 @@ header h1 {
     --glow-blur: 0px;
     --shadow-spread: 0px;
     box-shadow: 0 4px var(--shadow-spread) rgba(0, 0, 0, 0.3);
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 #viewer-container::before {
@@ -85,6 +119,7 @@ header h1 {
     --glow-blur: 12px;
     --shadow-spread: 20px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: #606060;
 }
 
 #viewer-container.interacting::before {
@@ -349,6 +384,7 @@ header .model-selector:focus {
     flex-shrink: 0;
     position: relative;
     border-radius: 8px;
+    transition: border-color 0.2s ease;
 }
 
 #new-thumbnail {
@@ -374,6 +410,7 @@ header .model-selector:focus {
 #new-thumbnail.interacting {
     --glow-opacity: 1;
     --glow-blur: 8px;
+    border-color: #606060;
 }
 
 #new-thumbnail.interacting::before {
