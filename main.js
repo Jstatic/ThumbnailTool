@@ -16,7 +16,6 @@ let thumbnailOffset = { x: 0, y: 0 };
 let thumbnailDragging = false;
 let thumbnailDragStart = { x: 0, y: 0 };
 let thumbnailScale = 1.0;
-let guidesImage = null;
 let showThumbnailGuides = true;
 let isLiveUpdating = false;
 let lastThumbnailUpdate = 0;
@@ -28,6 +27,7 @@ let newSnapshotData = null;
 
 // 3D viewer interaction state
 let isViewerInteracting = false;
+let viewerWheelTimeout = null;
 
 // Populate model dropdown from discovered files
 function populateModelDropdown() {
@@ -100,6 +100,9 @@ function init() {
 	// Add controls event listeners for thumbnail updates
 	viewer.controls.addEventListener('start', onControlsStart);
 	viewer.controls.addEventListener('end', onControlsEnd);
+	
+	// Add wheel event listener for viewer container
+	el.addEventListener('wheel', onViewerWheel);
 	
 	// Override the animate loop to include thumbnail updates
 	const originalAnimate = viewer.animate.bind(viewer);
@@ -185,6 +188,32 @@ function onControlsEnd() {
 	}
 }
 
+// Viewer wheel handler
+function onViewerWheel(event) {
+	// Add interacting class
+	if (!isViewerInteracting) {
+		const viewerContainer = document.getElementById('viewer-container');
+		if (viewerContainer) {
+			viewerContainer.classList.add('interacting');
+			isViewerInteracting = true;
+		}
+	}
+	
+	// Clear existing timeout
+	if (viewerWheelTimeout) {
+		clearTimeout(viewerWheelTimeout);
+	}
+	
+	// Remove interacting class after wheel activity stops
+	viewerWheelTimeout = setTimeout(() => {
+		const viewerContainer = document.getElementById('viewer-container');
+		if (viewerContainer) {
+			viewerContainer.classList.remove('interacting');
+			isViewerInteracting = false;
+		}
+	}, 150);
+}
+
 // Enable live updating on first user interaction
 function enableLiveUpdating() {
 	if (!hasUserInteracted) {
@@ -259,20 +288,6 @@ function initThumbnailCanvas() {
 	thumbnailCanvas = document.getElementById('thumbnail-canvas');
 	thumbnailCtx = thumbnailCanvas.getContext('2d');
 	
-	// Draw initial background
-	thumbnailCtx.fillStyle = '#121212';
-	thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-	
-	// Load guides image
-	guidesImage = new Image();
-	guidesImage.src = 'Guides.png';
-	guidesImage.onload = () => {
-		// Draw guides once loaded
-		thumbnailCtx.globalAlpha = 0.5;
-		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-		thumbnailCtx.globalAlpha = 1.0;
-	};
-	
 	// Add event listeners for dragging
 	thumbnailCanvas.addEventListener('mousedown', onThumbnailMouseDown);
 	thumbnailCanvas.addEventListener('mousemove', onThumbnailMouseMove);
@@ -292,18 +307,11 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
 	// Clear canvas
 	thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
 	
-	// Fill with background color
+	// Clear canvas to transparent
 	if (includeBackground) {
-		thumbnailCtx.fillStyle = '#121212';
-		thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+		thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
 	}
 	
-	// Draw guides background image at 50% opacity
-	if (shouldShowGrid && guidesImage && guidesImage.complete) {
-		thumbnailCtx.globalAlpha = 0.5;
-		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-		thumbnailCtx.globalAlpha = 1.0; // Reset to full opacity
-	}
 	
 	// Draw image with current offset and scale
 	const baseScale = Math.min(thumbnailCanvas.width / thumbnailImage.width, thumbnailCanvas.height / thumbnailImage.height);
@@ -383,6 +391,29 @@ function onThumbnailWheel(event) {
 	}
 	
 	renderThumbnail();
+	
+	// Add interacting class
+	if (!isThumbnailInteracting) {
+		const container = document.getElementById('new-thumbnail');
+		if (container) {
+			container.classList.add('interacting');
+			isThumbnailInteracting = true;
+		}
+	}
+	
+	// Clear existing timeout
+	if (thumbnailInteractionTimeout) {
+		clearTimeout(thumbnailInteractionTimeout);
+	}
+	
+	// Remove interacting class after wheel activity stops
+	thumbnailInteractionTimeout = setTimeout(() => {
+		const container = document.getElementById('new-thumbnail');
+		if (container) {
+			container.classList.remove('interacting');
+			isThumbnailInteracting = false;
+		}
+	}, 150);
 }
 
 // Show thumbnail canvas (canvas is visible from start)

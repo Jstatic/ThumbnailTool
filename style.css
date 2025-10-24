@@ -174,7 +174,7 @@ header h1 {
     color: #e0e0e0;
     font-size: 20px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 100;
     display: flex;
@@ -272,6 +272,7 @@ header h1 {
     outline: none;
     -webkit-appearance: none;
     appearance: none;
+    transition: opacity 0.3s ease;
 }
 
 .lighting-slider::-webkit-slider-thumb {
@@ -352,6 +353,19 @@ header h1 {
     z-index: 100;
     pointer-events: none;
     letter-spacing: 0.3px;
+    transition: opacity 0.3s ease;
+}
+
+#viewer-container.interacting .viewport-label,
+#new-thumbnail.interacting .viewport-label {
+    opacity: 0.2;
+}
+
+#viewer-container.interacting .grid-toggle-btn {
+    opacity: 0.2;
+}
+#viewer-container.interacting .lighting-slider {
+    opacity: 0.33;
 }
 
 header .model-selector {
@@ -437,6 +451,24 @@ header .model-selector:focus {
     z-index: 5;
 }
 
+#new-thumbnail::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('Guides.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.33;
+    pointer-events: none;
+    border-radius: 8px;
+    z-index: 0;
+    transition: opacity 0.2s ease;
+}
+
 #new-thumbnail.interacting {
     --glow-opacity: 1;
     --glow-blur: 8px;
@@ -445,6 +477,10 @@ header .model-selector:focus {
 
 #new-thumbnail.interacting::before {
     transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+#new-thumbnail.interacting::after {
+    /* opacity: 0.35; */
 }
 
 .thumbnail-label {
@@ -525,6 +561,7 @@ header .model-selector:focus {
     left: 0;
     width: 290px;
     height: 290px;
+    z-index: 2;
 }
 
 #thumbnail-canvas.active {

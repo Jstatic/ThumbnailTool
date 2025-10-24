@@ -15,7 +15,6 @@ let thumbnailOffset = { x: 0, y: 0 };
 let thumbnailDragging = false;
 let thumbnailDragStart = { x: 0, y: 0 };
 let thumbnailScale = 1.0; // Scale factor for thumbnail preview
-let guidesImage = null;
 let showThumbnailGuides = true; // Track whether to show guides in thumbnail
 let isLiveUpdating = false; // Don't start updating until user interacts
 let lastThumbnailUpdate = 0; // Track last update time for throttling
@@ -722,22 +721,6 @@ function initThumbnailCanvas() {
     thumbnailCtx = thumbnailCanvas.getContext('2d');
     console.log('Got 2D context:', !!thumbnailCtx);
     
-    // Draw initial background
-    thumbnailCtx.fillStyle = '#121212';
-    thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-    console.log('Drew initial background');
-    
-    // Load guides image
-    guidesImage = new Image();
-    guidesImage.src = 'Guides.png';
-    guidesImage.onload = () => {
-        console.log('Guides image loaded');
-        // Draw guides once loaded
-        thumbnailCtx.globalAlpha = 0.3;
-        thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-        thumbnailCtx.globalAlpha = 1.0;
-    };
-    
     // Add event listeners for dragging
     thumbnailCanvas.addEventListener('mousedown', onThumbnailMouseDown);
     thumbnailCanvas.addEventListener('mousemove', onThumbnailMouseMove);
@@ -759,18 +742,11 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
     // Clear canvas
     thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     
-    // Fill with background color only if includeBackground is true
+    // Clear canvas to transparent
     if (includeBackground) {
-        thumbnailCtx.fillStyle = '#121212';
-        thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
-	// Draw guides background image at 30% opacity - only if shouldShowGrid is true
-	if (shouldShowGrid && guidesImage && guidesImage.complete) {
-		thumbnailCtx.globalAlpha = 0.3;
-		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-		thumbnailCtx.globalAlpha = 1.0; // Reset to full opacity
-	}
     
     // Draw image with current offset and scale
     const baseScale = Math.min(thumbnailCanvas.width / thumbnailImage.width, thumbnailCanvas.height / thumbnailImage.height);
