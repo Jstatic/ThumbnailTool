@@ -216,9 +216,11 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
 		thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
 	}
 	
-	// Draw guides background image
+	// Draw guides background image at 50% opacity
 	if (shouldShowGrid && guidesImage && guidesImage.complete) {
+		thumbnailCtx.globalAlpha = 0.5;
 		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+		thumbnailCtx.globalAlpha = 1.0; // Reset to full opacity
 	}
 	
 	// Draw image with current offset and scale

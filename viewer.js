@@ -507,7 +507,7 @@ export class Viewer {
 
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
-				this.gridHelper = new GridHelper();
+				this.gridHelper = new GridHelper(10, 5); // 10 unit size, 5 divisions = wider subdivisions
 				// Fix flickering by positioning grid slightly below y=0 and setting render order
 				this.gridHelper.position.y = -0.001;
 				this.gridHelper.renderOrder = 0;

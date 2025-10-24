@@ -10,18 +10,18 @@
     <div class="container">
         <header>
             <h1>GLTF Thumbnail Editor</h1>
+            <select id="model-selector" class="model-selector">
+                <option value="assets/Turkey.gltf">Turkey</option>
+                <option value="assets/TurkeySm.gltf">Turkey Small</option>
+                <option value="assets/Truck.gltf">Truck</option>
+                <option value="assets/Part.gltf">Part</option>
+            </select>
         </header>
         
         <div class="main-content">
             <div class="viewer-section">
                 <div id="viewer-container">
                     <div class="viewport-label">3D Edit</div>
-                    <select id="model-selector" class="model-selector">
-                        <option value="assets/Turkey.gltf">Turkey</option>
-                        <option value="assets/TurkeySm.gltf">Turkey Small</option>
-                        <option value="assets/Truck.gltf">Truck</option>
-                        <option value="assets/Part.gltf">Part</option>
-                    </select>
                     <div id="loading-indicator">
                         <div class="loader"></div>
                         <p>Loading 3D Model...</p>

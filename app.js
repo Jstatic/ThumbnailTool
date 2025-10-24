@@ -222,7 +222,7 @@ function createCarModel() {
 // Create grid plane - matching three-gltf-viewer implementation
 function createGridPlane() {
     const size = 20;
-    const divisions = 20;
+    const divisions = 10; // Reduced from 20 for wider subdivisions
     
     gridHelper = new THREE.GridHelper(size, divisions, 0x4a4a4a, 0x2a2a2a);
     gridHelper.position.set(0, 0, 0);
@@ -709,10 +709,12 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
         thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
-    // Draw guides background image - only if shouldShowGrid is true
-    if (shouldShowGrid && guidesImage && guidesImage.complete) {
-        thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
-    }
+	// Draw guides background image at 50% opacity - only if shouldShowGrid is true
+	if (shouldShowGrid && guidesImage && guidesImage.complete) {
+		thumbnailCtx.globalAlpha = 0.5;
+		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+		thumbnailCtx.globalAlpha = 1.0; // Reset to full opacity
+	}
     
     // Draw image with current offset and scale
     const baseScale = Math.min(thumbnailCanvas.width / thumbnailImage.width, thumbnailCanvas.height / thumbnailImage.height);

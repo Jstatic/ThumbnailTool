@@ -17,7 +17,9 @@ body {
 }
 
 header {
-    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     color: #e0e0e0;
     margin-bottom: 20px;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
@@ -248,29 +250,26 @@ header h1 {
     letter-spacing: 0.3px;
 }
 
-.model-selector {
-    position: absolute;
-    top: 12px;
-    right: 12px;
+header .model-selector {
     background: rgba(40, 40, 40, 0.95);
     color: #e0e0e0;
-    padding: 6px 12px;
+    padding: 8px 16px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 400;
-    z-index: 100;
     border: 1px solid #505050;
     cursor: pointer;
     transition: background 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin-right: 20px;
 }
 
-.model-selector:hover {
+header .model-selector:hover {
     background: rgba(60, 60, 60, 0.95);
     box-shadow: 0 4px 12px rgba(80, 80, 80, 0.6);
 }
 
-.model-selector:focus {
+header .model-selector:focus {
     outline: none;
     border-color: #7070f0;
     box-shadow: 0 0 0 2px rgba(65, 88, 208, 0.3);
