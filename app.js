@@ -225,13 +225,18 @@ function createGridPlane() {
     const divisions = 10; // Reduced from 20 for wider subdivisions
     
     gridHelper = new THREE.GridHelper(size, divisions, 0x4a4a4a, 0x2a2a2a);
-    gridHelper.position.set(0, 0, 0);
+    gridHelper.position.set(0, -0.02, 0);
     
     // Configure material to prevent z-fighting (from three-gltf-viewer)
     gridHelper.material.depthWrite = false;
+    gridHelper.material.depthTest = true;
+    // Use polygon offset to push grid slightly back in depth buffer
+    gridHelper.material.polygonOffset = true;
+    gridHelper.material.polygonOffsetFactor = 1.0;
+    gridHelper.material.polygonOffsetUnits = 1.0;
     gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
-    gridHelper.renderOrder = 1; // Render after other objects
+    gridHelper.renderOrder = -1000; // Render before other objects
     
     scene.add(gridHelper);
 }
@@ -709,9 +714,9 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
         thumbnailCtx.fillRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
-	// Draw guides background image at 50% opacity - only if shouldShowGrid is true
+	// Draw guides background image at 30% opacity - only if shouldShowGrid is true
 	if (shouldShowGrid && guidesImage && guidesImage.complete) {
-		thumbnailCtx.globalAlpha = 0.5;
+		thumbnailCtx.globalAlpha = 0.3;
 		thumbnailCtx.drawImage(guidesImage, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
 		thumbnailCtx.globalAlpha = 1.0; // Reset to full opacity
 	}

@@ -520,17 +520,19 @@ export class Viewer {
 				this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
 				// Fix flickering with multiple strategies:
 				// 1. Position grid below y=0 to avoid z-fighting
-				this.gridHelper.position.y = -0.01;
+				this.gridHelper.position.y = -0.02;
 				// 2. Render grid before other objects (lower renderOrder renders first)
-				this.gridHelper.renderOrder = -999;
+				this.gridHelper.renderOrder = -1000;
 				// 3. Configure material to prevent depth conflicts
 				this.gridHelper.material.depthWrite = false;
 				this.gridHelper.material.depthTest = true;
-				// 4. Make grid semi-transparent for better blending
+				// 4. Use polygon offset to push grid slightly back in depth
+				this.gridHelper.material.polygonOffset = true;
+				this.gridHelper.material.polygonOffsetFactor = 1.0;
+				this.gridHelper.material.polygonOffsetUnits = 1.0;
+				// 5. Make grid semi-transparent for better blending
 				this.gridHelper.material.transparent = true;
 				this.gridHelper.material.opacity = 0.5;
-				// 5. Update material to use proper depth function
-				this.gridHelper.material.depthFunc = 2; // LessEqualDepth
 				
 				this.scene.add(this.gridHelper);
 			} else {
