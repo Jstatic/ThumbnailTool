@@ -906,6 +906,7 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
             const img = currentThumbnailDiv.querySelector('img');
             if (img) {
                 img.src = finalImageData;
+                img.style.display = 'block'; // Make the image visible
             }
             
             // Start fading out the loading background immediately after image appears

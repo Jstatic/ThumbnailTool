@@ -401,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const img = currentThumbnailDiv.querySelector('img');
 				if (img) {
 					img.src = finalImageData;
+					img.style.display = 'block'; // Make the image visible
 				}
 				
 				setTimeout(() => {

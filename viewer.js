@@ -306,7 +306,7 @@ export class Viewer {
 			this.defaultCamera.lookAt(new Vector3());
 		} else {
 			// Set fixed camera position and look at model center to center it in viewport
-			this.defaultCamera.position.set(-5.17, 4.5, -3.70);
+			this.defaultCamera.position.set(-5.22, 2.58, -4.62);
 			this.defaultCamera.lookAt(new Vector3(0, modelCenterY, 0));
 		}
 
@@ -507,7 +507,7 @@ export class Viewer {
 
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
-				this.gridHelper = new GridHelper(10, 5); // 10 unit size, 5 divisions = wider subdivisions
+				this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
 				// Fix flickering by positioning grid slightly below y=0 and setting render order
 				this.gridHelper.position.y = -0.001;
 				this.gridHelper.renderOrder = 0;

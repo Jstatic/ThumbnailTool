@@ -460,8 +460,8 @@ header .model-selector:focus {
 /* Position axes helper in lower right corner */
 .axes {
     position: absolute !important;
-    bottom: -20px !important;
-    right: 20px !important;
+    bottom: -10px !important;
+    right: 10px !important;
     width: 100px !important;
     height: 100px !important;
     pointer-events: none;
