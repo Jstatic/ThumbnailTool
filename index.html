@@ -11,18 +11,19 @@
         <header>
             <h1>GLTF Thumbnail Editor</h1>
             <div class="model-controls">
-                <label for="file-upload" class="file-upload-label">Upload GLTF</label>
-                <input type="file" id="file-upload" class="file-upload-input" accept=".gltf,.glb" multiple />
+                <span class="model-controls-label">Choose model</span>
                 <select id="model-selector" class="model-selector">
                     <!-- Options populated dynamically from assets folder -->
                 </select>
+                <input type="file" id="file-upload" class="file-upload-input" accept=".gltf,.glb" multiple />
+                <label for="file-upload" class="file-upload-label">Upload GLTF</label>
             </div>
         </header>
         
         <div class="main-content">
             <div class="viewer-section">
                 <div id="viewer-container">
-                    <div class="viewport-label">3D Edit</div>
+                    <div class="viewport-label">3D Transform</div>
                     <div id="loading-indicator">
                         <div class="loader"></div>
                         <p>Loading 3D Model...</p>
@@ -45,8 +46,15 @@
                 </div>
                 
                 <div id="current-thumbnail" class="thumbnail-display">
-                    <div class="viewport-label">Thumbnail preview</div>
+                    <div class="viewport-label">Thumbnail Preview</div>
                     <img alt="Thumbnail Preview" style="display: none;">
+                    <button id="download-thumbnail" class="download-thumbnail-btn" style="display: none;" title="Download Image">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
                 </div>
                 
                 <button id="use-snapshot" class="snapshot-btn" style="display: none;">Update Preview</button>

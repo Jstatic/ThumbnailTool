@@ -879,6 +879,22 @@ function clearThumbnailPreview() {
     if (updateBtn) {
         updateBtn.style.display = 'none';
     }
+    
+    // Hide current thumbnail image and download button
+    const currentThumbnailDiv = document.getElementById('current-thumbnail');
+    if (currentThumbnailDiv) {
+        const img = currentThumbnailDiv.querySelector('img');
+        if (img) {
+            img.style.display = 'none';
+            img.src = '';
+        }
+    }
+    
+    const downloadBtn = document.getElementById('download-thumbnail');
+    if (downloadBtn) {
+        downloadBtn.style.display = 'none';
+        downloadBtn.dataset.imageData = '';
+    }
 }
 
 document.getElementById('use-snapshot').addEventListener('click', () => {
@@ -909,6 +925,17 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
                 img.style.display = 'block'; // Make the image visible
             }
             
+            // Show download button
+            const downloadBtn = document.getElementById('download-thumbnail');
+            if (downloadBtn) {
+                downloadBtn.style.display = 'flex';
+                // Store the image data for download
+                downloadBtn.dataset.imageData = finalImageData;
+                console.log('Download button should now be visible');
+            } else {
+                console.error('Download button not found!');
+            }
+            
             // Start fading out the loading background immediately after image appears
             setTimeout(() => {
                 currentThumbnailDiv.classList.remove('loading');
@@ -923,7 +950,7 @@ document.getElementById('use-snapshot').addEventListener('click', () => {
     }
 });
 
-// Cancel button functionality
+// Cancel button and download button functionality
 document.addEventListener('DOMContentLoaded', () => {
     const cancelBtn = document.getElementById('cancel-btn');
     if (cancelBtn) {
@@ -938,6 +965,34 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear the modified canvas state and preview
             clearThumbnailPreview();
         });
+    }
+    
+    // Download thumbnail button functionality
+    const downloadBtn = document.getElementById('download-thumbnail');
+    if (downloadBtn) {
+        console.log('Download button found and event listener attached');
+        downloadBtn.addEventListener('click', () => {
+            const imageData = downloadBtn.dataset.imageData;
+            console.log('Download button clicked, imageData exists:', !!imageData);
+            
+            if (imageData) {
+                // Create a temporary link element to trigger download
+                const link = document.createElement('a');
+                link.href = imageData;
+                
+                // Generate filename with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                link.download = `thumbnail-${timestamp}.png`;
+                
+                // Trigger download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                console.log('Download initiated');
+            }
+        });
+    } else {
+        console.error('Download button not found during initialization!');
     }
 });
 

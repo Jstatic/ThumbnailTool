@@ -422,6 +422,13 @@ function clearThumbnailPreview() {
 		}
 	}
 	
+	// Hide download button
+	const downloadBtn = document.getElementById('download-thumbnail');
+	if (downloadBtn) {
+		downloadBtn.style.display = 'none';
+		downloadBtn.dataset.imageData = '';
+	}
+	
 	console.log('Thumbnail preview cleared');
 }
 
@@ -562,6 +569,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				btn.style.display = 'none';
 			}
 			
+			// Hide download button during update
+			const downloadBtn = document.getElementById('download-thumbnail');
+			if (downloadBtn) {
+				downloadBtn.style.display = 'none';
+			}
+			
 			// Render without grid and background for transparent export
 			renderThumbnail(false, false);
 			
@@ -575,6 +588,16 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (img) {
 					img.src = finalImageData;
 					img.style.display = 'block'; // Make the image visible
+				}
+				
+				// Show download button after update completes
+				if (downloadBtn) {
+					downloadBtn.style.display = 'flex';
+					// Store the image data for download
+					downloadBtn.dataset.imageData = finalImageData;
+					console.log('Download button should now be visible');
+				} else {
+					console.error('Download button not found!');
 				}
 				
 				setTimeout(() => {
@@ -627,6 +650,34 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Apply the changes
 			viewer.updateLights();
 		});
+	}
+	
+	// Download thumbnail button functionality
+	const downloadBtn = document.getElementById('download-thumbnail');
+	if (downloadBtn) {
+		console.log('Download button found and event listener attached');
+		downloadBtn.addEventListener('click', () => {
+			const imageData = downloadBtn.dataset.imageData;
+			console.log('Download button clicked, imageData exists:', !!imageData);
+			
+			if (imageData) {
+				// Create a temporary link element to trigger download
+				const link = document.createElement('a');
+				link.href = imageData;
+				
+				// Generate filename with timestamp
+				const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+				link.download = `thumbnail-${timestamp}.png`;
+				
+				// Trigger download
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				console.log('Download initiated');
+			}
+		});
+	} else {
+		console.error('Download button not found during initialization!');
 	}
 });
 

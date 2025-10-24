@@ -518,13 +518,19 @@ export class Viewer {
 		if (this.state.grid !== Boolean(this.gridHelper)) {
 			if (this.state.grid) {
 				this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
-				// Fix flickering by positioning grid slightly below y=0 and setting render order
-				this.gridHelper.position.y = -0.001;
-				this.gridHelper.renderOrder = 0;
+				// Fix flickering with multiple strategies:
+				// 1. Position grid below y=0 to avoid z-fighting
+				this.gridHelper.position.y = -0.01;
+				// 2. Render grid before other objects (lower renderOrder renders first)
+				this.gridHelper.renderOrder = -999;
+				// 3. Configure material to prevent depth conflicts
 				this.gridHelper.material.depthWrite = false;
-				// Make grid 50% dimmer
+				this.gridHelper.material.depthTest = true;
+				// 4. Make grid semi-transparent for better blending
 				this.gridHelper.material.transparent = true;
 				this.gridHelper.material.opacity = 0.5;
+				// 5. Update material to use proper depth function
+				this.gridHelper.material.depthFunc = 2; // LessEqualDepth
 				
 				this.scene.add(this.gridHelper);
 			} else {
