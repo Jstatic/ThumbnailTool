@@ -1,12 +1,22 @@
 import { Viewer } from './viewer.js';
 import { Box3, Vector3 } from 'three';
 
-// Discover all GLTF models in assets folder using Vite's glob import
-const modelFiles = import.meta.glob('./assets/*.gltf', { eager: false, as: 'url' });
+// List of available GLTF models in public folder
+const modelFiles = [
+	'Building.gltf',
+	'Dragonhead.gltf',
+	'Part.gltf',
+	'Pumpkin.gltf',
+	'Squirrel.gltf',
+	'Statue.gltf',
+	'Tree.gltf',
+	'Truck.gltf',
+	'Turkey.gltf'
+];
 
 // Application state
 let viewer;
-let currentModelUrl = 'assets/Truck.gltf';
+let currentModelUrl = '/Truck.gltf';
 
 // Canvas thumbnail state
 let thumbnailCanvas = null;
@@ -37,22 +47,21 @@ function populateModelDropdown() {
 	// Clear existing options
 	modelSelector.innerHTML = '';
 	
-	// Get model paths and sort them alphabetically
-	const modelPaths = Object.keys(modelFiles).sort();
+	// Sort models alphabetically
+	const modelPaths = modelFiles.sort();
 	
-	console.log('Discovered models:', modelPaths);
+	console.log('Available models:', modelPaths);
 	
 	// Add each model as an option
-	modelPaths.forEach(path => {
-		// Extract filename without path and extension for display
-		const filename = path.split('/').pop();
+	modelPaths.forEach(filename => {
+		// Extract filename without extension for display
 		const displayName = filename.replace('.gltf', '');
 		
-		// Convert path to relative assets path
-		const assetPath = path.replace('./', '');
+		// Files in public folder are served from root
+		const modelPath = '/' + filename;
 		
 		const option = document.createElement('option');
-		option.value = assetPath;
+		option.value = modelPath;
 		option.textContent = displayName;
 		modelSelector.appendChild(option);
 	});
@@ -60,13 +69,11 @@ function populateModelDropdown() {
 	// Set Truck as default if available, otherwise use the first model
 	const truckPath = modelPaths.find(path => path.includes('Truck.gltf'));
 	if (truckPath) {
-		const truckAssetPath = truckPath.replace('./', '');
-		currentModelUrl = truckAssetPath;
-		modelSelector.value = truckAssetPath;
+		currentModelUrl = '/' + truckPath;
+		modelSelector.value = currentModelUrl;
 	} else if (modelPaths.length > 0) {
-		const firstModel = modelPaths[0].replace('./', '');
-		currentModelUrl = firstModel;
-		modelSelector.value = firstModel;
+		currentModelUrl = '/' + modelPaths[0];
+		modelSelector.value = currentModelUrl;
 	}
 }
 

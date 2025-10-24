@@ -62,7 +62,7 @@ The GLTF viewer environment is based on [three-gltf-viewer](https://github.com/d
 - `app.js` - 3D viewer logic and controls
 - `viewer.js` - GLTF viewer environment
 - `environments.js` - HDR environment configurations
-- `assets/` - 3D model files (GLTF format)
+- `public/` - Static assets including 3D model files (GLTF format)
 - `package.json` - NPM dependencies and scripts
 - `vite.config.js` - Vite build configuration
 

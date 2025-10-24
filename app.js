@@ -5,7 +5,7 @@ let gridHelper;
 let newSnapshotData = null;
 let interactionTimeout = null; // Timer for interaction effect
 let isInteracting = false; // Track if we're currently showing the interaction effect
-let currentModelUrl = 'assets/Turkey.gltf'; // Track the currently loaded model
+let currentModelUrl = '/Turkey.gltf'; // Track the currently loaded model
 
 // Canvas thumbnail state
 let thumbnailCanvas = null;
