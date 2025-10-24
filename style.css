@@ -683,9 +683,7 @@ header .model-selector:focus {
     header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 20px;
         max-width: 340px;
-        margin-top: 12px;
     }
 
     .main-content {
@@ -695,7 +693,7 @@ header .model-selector:focus {
         display: none;
     }
     header h1 {
-        width: 100%;
+        display: none;
     }
 
     .model-selector {
