@@ -146,14 +146,19 @@ function loadModel(modelUrl) {
 	
 	console.log('Loading model:', modelUrl);
 	
-	// Track loading start time for minimum 2-second delay
+	// Track loading start time for minimum 1-second delay
 	const loadingStartTime = Date.now();
-	const minimumLoadingTime = 2000; // 2 seconds
+	const minimumLoadingTime = 1000; // 1 second
 	
 	// Show loading indicator
 	const loadingIndicator = document.getElementById('loading-indicator');
 	if (loadingIndicator) {
 		loadingIndicator.style.display = 'block';
+	}
+	
+	// Hide the canvas element during loading
+	if (viewer && viewer.renderer && viewer.renderer.domElement) {
+		viewer.renderer.domElement.style.visibility = 'hidden';
 	}
 	
 	// Clear existing model and reset viewport immediately
@@ -193,6 +198,11 @@ function loadModel(modelUrl) {
 					loadingIndicator.style.display = 'none';
 				}
 				
+				// Show the canvas element again
+				if (viewer && viewer.renderer && viewer.renderer.domElement) {
+					viewer.renderer.domElement.style.visibility = 'visible';
+				}
+				
 				// Trigger display update
 				viewer.updateDisplay();
 				
@@ -215,6 +225,11 @@ function loadModel(modelUrl) {
 			setTimeout(() => {
 				if (loadingIndicator) {
 					loadingIndicator.style.display = 'none';
+				}
+				
+				// Show the canvas element again even on error
+				if (viewer && viewer.renderer && viewer.renderer.domElement) {
+					viewer.renderer.domElement.style.visibility = 'visible';
 				}
 			}, remainingTime);
 		});
@@ -610,14 +625,19 @@ function handleFileUpload(event) {
 	
 	console.log('Loading uploaded model from:', fileURL);
 	
-	// Track loading start time for minimum 2-second delay
+	// Track loading start time for minimum 1-second delay
 	const uploadStartTime = Date.now();
-	const minimumLoadingTime = 2000; // 2 seconds
+	const minimumLoadingTime = 1000; // 1 second
 	
 	// Show loading indicator
 	const loadingIndicator = document.getElementById('loading-indicator');
 	if (loadingIndicator) {
 		loadingIndicator.style.display = 'block';
+	}
+	
+	// Hide the canvas element during loading
+	if (viewer && viewer.renderer && viewer.renderer.domElement) {
+		viewer.renderer.domElement.style.visibility = 'hidden';
 	}
 	
 	// Clear existing model and reset viewport immediately
@@ -652,6 +672,11 @@ function handleFileUpload(event) {
 					loadingIndicator.style.display = 'none';
 				}
 				
+				// Show the canvas element again
+				if (viewer && viewer.renderer && viewer.renderer.domElement) {
+					viewer.renderer.domElement.style.visibility = 'visible';
+				}
+				
 				// Clear the thumbnail preview
 				clearThumbnailPreview();
 				
@@ -679,6 +704,11 @@ function handleFileUpload(event) {
 				const loadingIndicator = document.getElementById('loading-indicator');
 				if (loadingIndicator) {
 					loadingIndicator.style.display = 'none';
+				}
+				
+				// Show the canvas element again even on error
+				if (viewer && viewer.renderer && viewer.renderer.domElement) {
+					viewer.renderer.domElement.style.visibility = 'visible';
 				}
 			}, remainingTime);
 		});
