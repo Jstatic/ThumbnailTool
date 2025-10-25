@@ -141,11 +141,19 @@ function loadModel(modelUrl) {
 	
 	console.log('Loading model:', modelUrl);
 	
+	// Track loading start time for minimum 2-second delay
+	const loadingStartTime = Date.now();
+	const minimumLoadingTime = 2000; // 2 seconds
+	
 	// Show loading indicator
 	const loadingIndicator = document.getElementById('loading-indicator');
 	if (loadingIndicator) {
 		loadingIndicator.style.display = 'block';
 	}
+	
+	// Clear existing model and reset viewport immediately
+	viewer.clear();
+	viewer.controls.reset();
 	
 	// Clear the thumbnail preview
 	clearThumbnailPreview();
@@ -159,27 +167,51 @@ function loadModel(modelUrl) {
 		console.log('Model loaded successfully:', modelUrl, gltf);
 		console.log('Scene content:', viewer.content);
 			
-			// Hide loading indicator
-			if (loadingIndicator) {
-				loadingIndicator.style.display = 'none';
+			// Hide the model content immediately after loading
+			if (viewer.content) {
+				viewer.content.visible = false;
 			}
 			
-			// Trigger display update
-			viewer.updateDisplay();
+			// Calculate remaining time to reach minimum loading duration
+			const elapsedTime = Date.now() - loadingStartTime;
+			const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
 			
-			// Enable live updating and force initial thumbnail capture
-			isLiveUpdating = true;
-			hasUserInteracted = true;
+			// Wait for minimum loading time before showing model
 			setTimeout(() => {
-				lastThumbnailUpdate = 0;
-				updateThumbnailFromViewport();
-			}, 200);
+				// Show the model content
+				if (viewer.content) {
+					viewer.content.visible = true;
+				}
+				
+				// Hide loading indicator
+				if (loadingIndicator) {
+					loadingIndicator.style.display = 'none';
+				}
+				
+				// Trigger display update
+				viewer.updateDisplay();
+				
+				// Enable live updating and force initial thumbnail capture
+				isLiveUpdating = true;
+				hasUserInteracted = true;
+				setTimeout(() => {
+					lastThumbnailUpdate = 0;
+					updateThumbnailFromViewport();
+				}, 200);
+			}, remainingTime);
 		})
 		.catch((error) => {
 			console.error('Error loading model:', error);
-			if (loadingIndicator) {
-				loadingIndicator.style.display = 'none';
-			}
+			
+			// Calculate remaining time even for errors
+			const elapsedTime = Date.now() - loadingStartTime;
+			const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
+			
+			setTimeout(() => {
+				if (loadingIndicator) {
+					loadingIndicator.style.display = 'none';
+				}
+			}, remainingTime);
 		});
 }
 
@@ -452,12 +484,23 @@ function showThumbnailCanvas() {
 function clearThumbnailPreview() {
 	console.log('Clearing thumbnail preview...');
 	
+	// Reset thumbnail state variables
 	thumbnailOffset = { x: 0, y: 0 };
 	thumbnailScale = 1.0;
+	thumbnailImage = null;
+	newSnapshotData = null;
+	
+	// Stop live updating during model loading
+	isLiveUpdating = false;
 	
 	const updateBtn = document.getElementById('use-snapshot');
 	if (updateBtn) {
 		updateBtn.style.display = 'none';
+	}
+	
+	// Clear the new thumbnail canvas
+	if (thumbnailCanvas && thumbnailCtx) {
+		thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
 	}
 	
 	// Clear the current thumbnail image
@@ -477,7 +520,6 @@ function clearThumbnailPreview() {
 		downloadBtn.dataset.imageData = '';
 	}
 	
-	// Keep live updating active - thumbnail canvas continues showing live view
 	console.log('Thumbnail preview cleared');
 }
 
@@ -531,40 +573,77 @@ function handleFileUpload(event) {
 	
 	console.log('Loading uploaded model from:', fileURL);
 	
+	// Track loading start time for minimum 2-second delay
+	const uploadStartTime = Date.now();
+	const minimumLoadingTime = 2000; // 2 seconds
+	
+	// Show loading indicator
+	const loadingIndicator = document.getElementById('loading-indicator');
+	if (loadingIndicator) {
+		loadingIndicator.style.display = 'block';
+	}
+	
+	// Clear existing model and reset viewport immediately
+	viewer.clear();
+	viewer.controls.reset();
+	
 	// Load the uploaded model with the asset map
 	// The viewer.load() function accepts a rootPath and assetMap parameter
 	viewer.load(fileURL, '', assetMap)
 		.then((gltf) => {
 			console.log('Uploaded model loaded successfully:', mainFile.name, gltf);
 			
-			// Hide loading indicator
-			const loadingIndicator = document.getElementById('loading-indicator');
-			if (loadingIndicator) {
-				loadingIndicator.style.display = 'none';
+			// Hide the model content immediately after loading
+			if (viewer.content) {
+				viewer.content.visible = false;
 			}
 			
-			// Clear the thumbnail preview
-			clearThumbnailPreview();
+			// Calculate remaining time to reach minimum loading duration
+			const elapsedTime = Date.now() - uploadStartTime;
+			const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
 			
-			// Update current model URL reference
-			currentModelUrl = fileURL;
-			
-			// Enable live updating and force initial thumbnail capture
-			isLiveUpdating = true;
-			hasUserInteracted = true;
+			// Wait for minimum loading time before showing model
 			setTimeout(() => {
-				lastThumbnailUpdate = 0;
-				updateThumbnailFromViewport();
-			}, 200);
+				// Show the model content
+				if (viewer.content) {
+					viewer.content.visible = true;
+				}
+				
+				// Hide loading indicator
+				const loadingIndicator = document.getElementById('loading-indicator');
+				if (loadingIndicator) {
+					loadingIndicator.style.display = 'none';
+				}
+				
+				// Clear the thumbnail preview
+				clearThumbnailPreview();
+				
+				// Update current model URL reference
+				currentModelUrl = fileURL;
+				
+				// Enable live updating and force initial thumbnail capture
+				isLiveUpdating = true;
+				hasUserInteracted = true;
+				setTimeout(() => {
+					lastThumbnailUpdate = 0;
+					updateThumbnailFromViewport();
+				}, 200);
+			}, remainingTime);
 		})
 		.catch((error) => {
 			console.error('Error loading uploaded model:', error);
 			alert('Error loading model: ' + error.message);
 			
-			const loadingIndicator = document.getElementById('loading-indicator');
-			if (loadingIndicator) {
-				loadingIndicator.style.display = 'none';
-			}
+			// Calculate remaining time even for errors
+			const elapsedTime = Date.now() - uploadStartTime;
+			const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
+			
+			setTimeout(() => {
+				const loadingIndicator = document.getElementById('loading-indicator');
+				if (loadingIndicator) {
+					loadingIndicator.style.display = 'none';
+				}
+			}, remainingTime);
 		});
 	
 	// Clear the model selector since we're loading a custom file

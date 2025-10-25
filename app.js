@@ -1,6 +1,5 @@
 // Three.js scene setup
 let scene, camera, renderer, car, controls;
-let orientationScene, orientationCamera, orientationRenderer;
 let gridHelper;
 let newSnapshotData = null;
 let interactionTimeout = null; // Timer for interaction effect
@@ -22,6 +21,13 @@ const THUMBNAIL_UPDATE_INTERVAL = 100; // Update thumbnail every 100ms (10 times
 let hasUserInteracted = false; // Track if user has interacted with 3D canvas
 let thumbnailInteractionTimeout = null; // Timer for thumbnail interaction effect
 let isThumbnailInteracting = false; // Track if we're currently showing the thumbnail interaction effect
+
+// Touch state variables
+let touchDragging = false;
+let touchDragStart = { x: 0, y: 0 };
+let lastTouchDistance = 0;
+let initialPinchScale = 1.0;
+let isUsingTouch = false; // Track if currently using touch to prevent mouse conflicts
 
 // Initialize the 3D viewer
 function init() {
@@ -86,9 +92,6 @@ function init() {
     // Create a simple car model
     createCarModel();
     
-    // Create orientation indicator
-    createOrientationIndicator();
-    
     // OrbitControls setup (three-gltf-viewer standard)
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -113,10 +116,21 @@ function init() {
 function loadModel(modelUrl) {
     currentModelUrl = modelUrl;
     
+    // Track loading start time for minimum 2-second delay
+    const loadingStartTime = Date.now();
+    const minimumLoadingTime = 2000; // 2 seconds
+    
     // Show loading indicator
     const loadingIndicator = document.getElementById('loading-indicator');
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
+    }
+    
+    // Clear existing model immediately
+    if (car) {
+        while(car.children.length > 0) {
+            car.remove(car.children[0]);
+        }
     }
     
     // Clear the thumbnail preview
@@ -143,17 +157,11 @@ function loadModel(modelUrl) {
         function (gltf) {
             console.log('Model loaded successfully!');
             
-            // Hide loading indicator
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-            }
-            
+            // Process the model but don't add it to the scene yet
             // Clear any existing models
             while(car.children.length > 0) {
                 car.remove(car.children[0]);
             }
-            
-            car.add(gltf.scene);
             
             // Compute bounding box for the entire model
             const box = new THREE.Box3().setFromObject(gltf.scene);
@@ -197,15 +205,30 @@ function loadModel(modelUrl) {
                 }
             });
             
-            // Start live updating as soon as model loads
-            enableLiveUpdating();
+            // Calculate remaining time to reach minimum loading duration
+            const elapsedTime = Date.now() - loadingStartTime;
+            const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
             
-            // Force immediate thumbnail update after render
+            // Wait for minimum loading time before showing model
             setTimeout(() => {
-                console.log('Forcing initial thumbnail update...');
-                lastThumbnailUpdate = 0; // Reset throttle
-                updateThumbnailFromViewport();
-            }, 200);
+                // Now add the model to the scene (making it visible)
+                car.add(gltf.scene);
+                
+                // Hide loading indicator
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                
+                // Start live updating as soon as model loads
+                enableLiveUpdating();
+                
+                // Force immediate thumbnail update after render
+                setTimeout(() => {
+                    console.log('Forcing initial thumbnail update...');
+                    lastThumbnailUpdate = 0; // Reset throttle
+                    updateThumbnailFromViewport();
+                }, 200);
+            }, remainingTime);
         },
         function (xhr) {
             const percent = xhr.total > 0 ? (xhr.loaded / xhr.total * 100) : 0;
@@ -214,7 +237,18 @@ function loadModel(modelUrl) {
         function (error) {
             console.log(`Error loading model: ${error.message || error}`);
             console.log('Using fallback model');
-            createEnhancedCarModel();
+            
+            // Calculate remaining time even for errors
+            const elapsedTime = Date.now() - loadingStartTime;
+            const remainingTime = Math.max(0, minimumLoadingTime - elapsedTime);
+            
+            setTimeout(() => {
+                // Hide loading indicator
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+                createEnhancedCarModel();
+            }, remainingTime);
         }
     );
 }
@@ -248,29 +282,6 @@ function createGridPlane() {
     gridHelper.renderOrder = -1000; // Render before other objects
     
     scene.add(gridHelper);
-}
-
-// Create orientation indicator in corner
-function createOrientationIndicator() {
-    const container = document.getElementById('viewer-container');
-    
-    // Create separate scene for orientation
-    orientationScene = new THREE.Scene();
-    
-    // Create camera for orientation view
-    orientationCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 10);
-    orientationCamera.position.set(0, 0, 3);
-    
-    // Create renderer for orientation
-    orientationRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    orientationRenderer.setSize(120, 120);
-    orientationRenderer.setClearColor(0x000000, 0);
-    orientationRenderer.domElement.id = 'orientation-indicator';
-    container.appendChild(orientationRenderer.domElement);
-    
-    // Add axes helper to orientation scene
-    const axesHelper = new THREE.AxesHelper(1);
-    orientationScene.add(axesHelper);
 }
 
 // Enhanced fallback car model with more detail
@@ -640,13 +651,6 @@ function animate() {
         controls.update();
     }
     
-    // Update orientation indicator to match main camera
-    if (orientationCamera) {
-        orientationCamera.position.copy(camera.position).normalize().multiplyScalar(3);
-        orientationCamera.lookAt(0, 0, 0);
-        orientationRenderer.render(orientationScene, orientationCamera);
-    }
-    
     renderer.render(scene, camera);
     
     // Update thumbnail preview if live updating is enabled
@@ -729,6 +733,13 @@ function initThumbnailCanvas() {
     
     // Add event listener for resizing with mouse wheel
     thumbnailCanvas.addEventListener('wheel', onThumbnailWheel);
+    
+    // Add touch event listeners
+    thumbnailCanvas.addEventListener('touchstart', onThumbnailTouchStart, { passive: false });
+    thumbnailCanvas.addEventListener('touchmove', onThumbnailTouchMove, { passive: false });
+    thumbnailCanvas.addEventListener('touchend', onThumbnailTouchEnd, { passive: false });
+    thumbnailCanvas.addEventListener('touchcancel', onThumbnailTouchEnd, { passive: false });
+    
     console.log('Thumbnail canvas initialized');
 }
 
@@ -768,6 +779,9 @@ function renderThumbnail(includeGrid = null, includeBackground = true) {
 
 // Thumbnail canvas mouse handlers
 function onThumbnailMouseDown(event) {
+    // Prevent mouse events if currently using touch
+    if (isUsingTouch) return;
+    
     showUpdateButton();
     thumbnailDragging = true;
     const rect = thumbnailCanvas.getBoundingClientRect();
@@ -797,7 +811,8 @@ function onThumbnailMouseDown(event) {
 }
 
 function onThumbnailMouseMove(event) {
-    if (!thumbnailDragging) return;
+    // Prevent mouse events if currently using touch
+    if (isUsingTouch || !thumbnailDragging) return;
     
     const rect = thumbnailCanvas.getBoundingClientRect();
     // Scale factor to convert display coordinates to canvas coordinates
@@ -811,6 +826,9 @@ function onThumbnailMouseMove(event) {
 }
 
 function onThumbnailMouseUp() {
+    // Prevent mouse events if currently using touch
+    if (isUsingTouch) return;
+    
     thumbnailDragging = false;
     
     // Clear any existing timeout to prevent conflicts
@@ -868,6 +886,117 @@ function onThumbnailWheel(event) {
     }, 200);
 }
 
+// Helper function to get touch coordinates
+function getTouchCoordinates(touch, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY
+    };
+}
+
+// Helper function to calculate distance between two touches
+function getTouchDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Touch event handlers
+function onThumbnailTouchStart(event) {
+    event.preventDefault();
+    isUsingTouch = true; // Mark that we're using touch
+    showUpdateButton();
+    
+    const touches = event.touches;
+    
+    if (touches.length === 1) {
+        // Single touch - start dragging
+        touchDragging = true;
+        const coords = getTouchCoordinates(touches[0], thumbnailCanvas);
+        
+        touchDragStart = {
+            x: coords.x - thumbnailOffset.x,
+            y: coords.y - thumbnailOffset.y
+        };
+        
+        // Clear any existing timeout to prevent conflicts
+        if (thumbnailInteractionTimeout) {
+            clearTimeout(thumbnailInteractionTimeout);
+            thumbnailInteractionTimeout = null;
+        }
+        
+        // Add visual feedback
+        if (!isThumbnailInteracting) {
+            const container = document.getElementById('new-thumbnail');
+            if (container) {
+                container.classList.add('interacting');
+                isThumbnailInteracting = true;
+            }
+        }
+    } else if (touches.length === 2) {
+        // Two touches - start pinch zoom
+        touchDragging = false; // Stop dragging if it was active
+        lastTouchDistance = getTouchDistance(touches[0], touches[1]);
+        initialPinchScale = thumbnailScale;
+    }
+}
+
+function onThumbnailTouchMove(event) {
+    event.preventDefault();
+    
+    const touches = event.touches;
+    
+    if (touches.length === 1 && touchDragging) {
+        // Single touch - drag
+        const coords = getTouchCoordinates(touches[0], thumbnailCanvas);
+        
+        thumbnailOffset.x = coords.x - touchDragStart.x;
+        thumbnailOffset.y = coords.y - touchDragStart.y;
+        
+        renderThumbnail();
+    } else if (touches.length === 2 && lastTouchDistance > 0) {
+        // Two touches - pinch zoom
+        const currentDistance = getTouchDistance(touches[0], touches[1]);
+        
+        // Calculate scale change based on distance ratio
+        const scaleRatio = currentDistance / lastTouchDistance;
+        const newScale = thumbnailScale * scaleRatio;
+        
+        // Apply scale limits
+        thumbnailScale = Math.max(0.3, Math.min(3.0, newScale));
+        
+        // Update last distance for next frame
+        lastTouchDistance = currentDistance;
+        
+        renderThumbnail();
+    }
+}
+
+function onThumbnailTouchEnd(event) {
+    event.preventDefault();
+    
+    touchDragging = false;
+    lastTouchDistance = 0;
+    
+    // Remove visual feedback if no more touches
+    if (event.touches.length === 0) {
+        // Reset touch flag when all touches are gone
+        isUsingTouch = false;
+        
+        if (isThumbnailInteracting) {
+            const container = document.getElementById('new-thumbnail');
+            if (container) {
+                container.classList.remove('interacting');
+                isThumbnailInteracting = false;
+            }
+        }
+    }
+}
+
 // Show thumbnail canvas (canvas is visible from start)
 function showThumbnailCanvas() {
     // Canvas is already active from start, just show the update button
@@ -882,11 +1011,21 @@ function clearThumbnailPreview() {
     // Reset state variables
     thumbnailOffset = { x: 0, y: 0 };
     thumbnailScale = 1.0;
+    thumbnailImage = null;
+    newSnapshotData = null;
+    
+    // Stop live updating during model loading
+    isLiveUpdating = false;
     
     // Hide update button
     const updateBtn = document.getElementById('use-snapshot');
     if (updateBtn) {
         updateBtn.style.display = 'none';
+    }
+    
+    // Clear the new thumbnail canvas
+    if (thumbnailCanvas && thumbnailCtx) {
+        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
     }
     
     // Hide current thumbnail image and download button
@@ -904,8 +1043,6 @@ function clearThumbnailPreview() {
         downloadBtn.style.display = 'none';
         downloadBtn.dataset.imageData = '';
     }
-    
-    // Keep live updating active - thumbnail canvas continues showing live view
 }
 
 document.getElementById('use-snapshot').addEventListener('click', () => {

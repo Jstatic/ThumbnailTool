@@ -570,17 +570,17 @@ export class Viewer {
 		this.axesCamera.up = this.defaultCamera.up;
 
 		// Create custom axes with uniform shorter lengths
-		const xLength = 1.8;
-		const yLength = 1.8;
-		const zLength = 1.8;
+		const xLength = 1.2;
+		const yLength = 1.2;
+		const zLength = 1.2;
 		
 		this.axesCorner = new Group();
 		
-		// X axis (red)
+		// X axis (magenta)
 		const xGeometry = new BufferGeometry();
 		xGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, xLength, 0, 0], 3));
-		xGeometry.setAttribute('color', new Float32BufferAttribute([1, 0, 0, 1, 0, 0], 3));
-		const xMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+		xGeometry.setAttribute('color', new Float32BufferAttribute([0.9, 0, 0.6, 0.9, 0, 0.6], 3));
+		const xMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
 		const xAxis = new LineSegments(xGeometry, xMaterial);
 		this.axesCorner.add(xAxis);
 		
@@ -588,15 +588,15 @@ export class Viewer {
 		const yGeometry = new BufferGeometry();
 		yGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, yLength, 0], 3));
 		yGeometry.setAttribute('color', new Float32BufferAttribute([0, 1, 0, 0, 1, 0], 3));
-		const yMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+		const yMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
 		const yAxis = new LineSegments(yGeometry, yMaterial);
 		this.axesCorner.add(yAxis);
 		
-	// Z axis (blue)
+	// Z axis (cyan)
 	const zGeometry = new BufferGeometry();
 	zGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, zLength], 3));
-	zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0, 1, 0, 0, 1], 3));
-	const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 3 });
+	zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0.7, 0.9, 0, 0.7, 0.9], 3));
+	const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
 	const zAxis = new LineSegments(zGeometry, zMaterial);
 	this.axesCorner.add(zAxis);
 	
