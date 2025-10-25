@@ -544,7 +544,7 @@ header .model-selector:focus {
     margin: var(--grid-gap) auto 0 auto;
 }
 
-.left-buttons {
+.left-buttons   {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -577,7 +577,7 @@ header .model-selector:focus {
     display: flex;
     align-items: center;
     font-size: 14px;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,1);
     padding: 8px 13px;
     border-radius: 6px;
     gap: 12px;
