@@ -170,7 +170,7 @@ header h1 {
     transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 100;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 0;
@@ -194,13 +194,13 @@ header h1 {
 
 .lighting-slider {
     position: absolute !important;
-    top: 28px !important;
-    right: 24px !important;
+    bottom: 30px !important;
+    left: 20px !important;
     z-index: 100;
-    width: 100px;
-    height: 4px;
+    width: 120px;
+    height: 5px;
     background: linear-gradient(to right, #2a2a2a 0%, #ffffff 100%);
-    border-radius: 2px;
+    border-radius: 5px;
     outline: none;
     -webkit-appearance: none;
     appearance: none;
@@ -278,7 +278,7 @@ header h1 {
 .viewport-label {
     position: absolute;
     top: var(--ui-offset);
-    left: var(--ui-offset);
+    right: var(--ui-offset);
     /* background: #060606; */
     color: #ffffff;
     padding: 3px 4px;
@@ -296,6 +296,10 @@ header h1 {
     -webkit-backface-visibility: hidden;
 }
 
+#viewer-container .viewport-label {
+    left: var(--ui-offset);
+}
+
 #viewer-container.interacting .viewport-label,
 #new-thumbnail.interacting .viewport-label {
     opacity: 0.15;
@@ -305,7 +309,7 @@ header h1 {
     opacity: 0.15;
 }
 #viewer-container.interacting .lighting-slider {
-    opacity: 0.15;
+    opacity: 0.0;
 }
 #viewer-container.interacting .helpers-section {
     opacity: 0.5;
@@ -749,6 +753,12 @@ header .model-selector:focus {
     .thumbnail-display {
         width: 160px;
         height: 160px;
+    }
+
+    .lighting-slider {
+        height: 8px;
+        width: 90px;
+        bottom: 24px !important;
     }
 
     #new-thumbnail {
