@@ -118,7 +118,8 @@ export class Viewer {
 		this.renderer = window.renderer = new WebGLRenderer({ 
 			antialias: true,
 			alpha: true, // Enable transparency for screenshots
-			preserveDrawingBuffer: true // Required for toDataURL()
+			preserveDrawingBuffer: true, // Required for toDataURL()
+			logarithmicDepthBuffer: true // Better depth precision to reduce z-fighting
 		});
 		this.renderer.setClearColor(0xcccccc);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -519,20 +520,22 @@ export class Viewer {
 			if (this.state.grid) {
 			this.gridHelper = new GridHelper(30, 15); // 30 unit size, 15 divisions = wider subdivisions
 			// Fix flickering with multiple strategies:
-			// 1. Position grid below y=0 to avoid z-fighting
-			this.gridHelper.position.y = -0.05;
+			// 1. Position grid further below y=0 to avoid z-fighting
+			this.gridHelper.position.y = -0.01;
 			// 2. Render grid before other objects (lower renderOrder renders first)
 			this.gridHelper.renderOrder = -1000;
 			// 3. Configure material to prevent depth conflicts
 			this.gridHelper.material.depthWrite = false;
 			this.gridHelper.material.depthTest = true;
-			// 4. Use polygon offset to push grid significantly back in depth buffer
+			// 4. Use stronger polygon offset to push grid back in depth buffer
 			this.gridHelper.material.polygonOffset = true;
-			this.gridHelper.material.polygonOffsetFactor = 2.0;
-			this.gridHelper.material.polygonOffsetUnits = 4.0;
+			this.gridHelper.material.polygonOffsetFactor = 10.0;
+			this.gridHelper.material.polygonOffsetUnits = 10.0;
 			// 5. Make grid semi-transparent for better blending
 			this.gridHelper.material.transparent = true;
 			this.gridHelper.material.opacity = 0.5;
+			// 6. Disable frustum culling to prevent flickering at edges
+			this.gridHelper.frustumCulled = false;
 				
 				this.scene.add(this.gridHelper);
 			} else {

@@ -2,6 +2,7 @@
     --ui-offset: 12px;
     --grid-gap: 20px;
     --desktop-width: 910px;
+    --container-bg: #0d0d0d;
 }
 
 * {
@@ -100,7 +101,7 @@ header h1 {
     width: 600px;
     height: 600px;
     overflow: hidden;
-    background: #121212;
+    background: var(--container-bg);
     position: relative;
     border: 1px solid #2a2a2a;
     flex-shrink: 0;
@@ -149,6 +150,9 @@ header h1 {
     top: 0;
     left: 0;
     z-index: 1;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
 }
 
 .grid-toggle-btn {
@@ -170,6 +174,10 @@ header h1 {
     align-items: center;
     justify-content: center;
     padding: 0;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .grid-toggle-btn:hover {
@@ -197,6 +205,10 @@ header h1 {
     -webkit-appearance: none;
     appearance: none;
     transition: opacity 0.3s ease;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .lighting-slider::-webkit-slider-thumb {
@@ -278,6 +290,10 @@ header h1 {
     pointer-events: none;
     letter-spacing: 0.3px;
     transition: opacity 0.3s ease;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 #viewer-container.interacting .viewport-label,
@@ -364,7 +380,7 @@ header .model-selector:focus {
 #new-thumbnail {
     --glow-opacity: 0;
     --glow-blur: 0px;
-    background-color: #0d0d0d;
+    background-color: var(--container-bg);
 }
 
 #new-thumbnail::before {
@@ -551,6 +567,10 @@ header .model-selector:focus {
     opacity: 0;
     z-index: 2;
     transition: transform 0.3s, opacity 0.35s ease;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .helper-item {
@@ -652,6 +672,10 @@ header .model-selector:focus {
     pointer-events: none;
     z-index: 100;
     margin: 0 !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 .axes canvas {
@@ -663,7 +687,18 @@ header .model-selector:focus {
     .main-content {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
+        max-width: 600px;
         overflow-y: auto;
+    }
+    header {
+        max-width: 600px;
+    }
+    .thumbnail-section {
+        flex-direction: row;
+        gap: var(--grid-gap);
+    }
+    .button-container {
+        max-width: 600px;
     }
 }
 

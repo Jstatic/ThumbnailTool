@@ -50,7 +50,8 @@ function init() {
     renderer = new THREE.WebGLRenderer({ 
         antialias: true, 
         preserveDrawingBuffer: true, 
-        alpha: true
+        alpha: true,
+        logarithmicDepthBuffer: true // Better depth precision to reduce z-fighting
     });
     
     // Fixed 1200x1200 square canvas
@@ -268,18 +269,20 @@ function createGridPlane() {
     const divisions = 10; // Reduced from 20 for wider subdivisions
     
     gridHelper = new THREE.GridHelper(size, divisions, 0x4a4a4a, 0x2a2a2a);
-    gridHelper.position.set(0, -0.05, 0);
+    gridHelper.position.set(0, -0.01, 0);
     
     // Configure material to prevent z-fighting (from three-gltf-viewer)
     gridHelper.material.depthWrite = false;
     gridHelper.material.depthTest = true;
-    // Use polygon offset to push grid significantly back in depth buffer
+    // Use stronger polygon offset to push grid back in depth buffer
     gridHelper.material.polygonOffset = true;
-    gridHelper.material.polygonOffsetFactor = 2.0;
-    gridHelper.material.polygonOffsetUnits = 4.0;
+    gridHelper.material.polygonOffsetFactor = 10.0;
+    gridHelper.material.polygonOffsetUnits = 10.0;
     gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
     gridHelper.renderOrder = -1000; // Render before other objects
+    // Disable frustum culling to prevent flickering at edges
+    gridHelper.frustumCulled = false;
     
     scene.add(gridHelper);
 }
