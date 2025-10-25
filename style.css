@@ -577,12 +577,22 @@ header .model-selector:focus {
     -webkit-backface-visibility: hidden;
 }
 
+.helpers-section.mobile-helpers {
+    display: none;
+    bottom: 8px;
+}
+
+.helpers-section.mobile-helpers .helper-item {
+    gap: 8px;
+    padding: 6px 10px;
+}
+
 .helper-item {
     display: flex;
     align-items: center;
-    font-size: 14px;
+    font-size: 12px;
     background: rgba(0,0,0,0.8);
-    padding: 8px 13px;
+    padding: 7px 12px;
     border-radius: 6px;
     gap: 12px;
     color:#ffffff;
@@ -783,8 +793,12 @@ header .model-selector:focus {
         gap: 16px;
     }
     
-    .helpers-section {
+    .helpers-section.desktop-helpers {
         display: none;
+    }
+    
+    .helpers-section.mobile-helpers {
+        display: flex !important;
     }
     
     .action-buttons {
