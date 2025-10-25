@@ -12,11 +12,11 @@
     "node": "18.x"
   },
   "dependencies": {
-    "three": "^0.160.0",
-    "dat.gui": "^0.7.9"
+    "18": "^0.0.0",
+    "dat.gui": "^0.7.9",
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"
   }
 }
-

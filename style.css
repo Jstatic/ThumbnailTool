@@ -587,6 +587,16 @@ header .model-selector:focus {
     gap: 12px;
     color:#ffffff;
 }
+
+.helper-item.pan-helper img {
+    -moz-transform: scaleX(-1);
+    -o-transform: scaleX(-1);
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    filter: FlipH;
+    -ms-filter: "FlipH";
+}
+
 .action-buttons {
     display: flex;
     gap: var(--grid-gap);
