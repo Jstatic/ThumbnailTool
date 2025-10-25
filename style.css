@@ -194,8 +194,8 @@ header h1 {
 
 .lighting-slider {
     position: absolute !important;
-    bottom: 30px !important;
-    left: 20px !important;
+    top: 24px !important;
+    right: 20px !important;
     z-index: 100;
     width: 120px;
     height: 5px;
@@ -758,7 +758,8 @@ header .model-selector:focus {
     .lighting-slider {
         height: 8px;
         width: 90px;
-        bottom: 24px !important;
+        top: 28px !important;
+        right: 24px !important;
     }
 
     #new-thumbnail {
