@@ -131,6 +131,12 @@ export class Viewer {
 
 		this.controls = new OrbitControls(this.defaultCamera, this.renderer.domElement);
 		this.controls.screenSpacePanning = true;
+		
+		// Log camera position whenever it changes
+		this.controls.addEventListener('change', () => {
+			const pos = this.defaultCamera.position;
+			console.log(`Camera position: x=${pos.x.toFixed(2)}, y=${pos.y.toFixed(2)}, z=${pos.z.toFixed(2)}`);
+		});
 
 		this.el.appendChild(this.renderer.domElement);
 
@@ -311,7 +317,7 @@ export class Viewer {
 			this.defaultCamera.lookAt(new Vector3());
 		} else {
 			// Set fixed camera position and look at model center to center it in viewport
-			this.defaultCamera.position.set(-5.22, 2.58, -4.62);
+			this.defaultCamera.position.set(-4.70, 1.59, -5.29);
 			this.defaultCamera.lookAt(new Vector3(0, modelCenterY, 0));
 		}
 
@@ -580,7 +586,7 @@ export class Viewer {
 		const xGeometry = new BufferGeometry();
 		xGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, xLength, 0, 0], 3));
 		xGeometry.setAttribute('color', new Float32BufferAttribute([0.9, 0, 0.6, 0.9, 0, 0.6], 3));
-		const xMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
+		const xMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 10 });
 		const xAxis = new LineSegments(xGeometry, xMaterial);
 		this.axesCorner.add(xAxis);
 		
@@ -588,7 +594,7 @@ export class Viewer {
 		const yGeometry = new BufferGeometry();
 		yGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, yLength, 0], 3));
 		yGeometry.setAttribute('color', new Float32BufferAttribute([0, 1, 0, 0, 1, 0], 3));
-		const yMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
+		const yMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 10 });
 		const yAxis = new LineSegments(yGeometry, yMaterial);
 		this.axesCorner.add(yAxis);
 		
@@ -596,7 +602,7 @@ export class Viewer {
 	const zGeometry = new BufferGeometry();
 	zGeometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 0, 0, zLength], 3));
 	zGeometry.setAttribute('color', new Float32BufferAttribute([0, 0.7, 0.9, 0, 0.7, 0.9], 3));
-	const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 8 });
+	const zMaterial = new LineBasicMaterial({ vertexColors: true, linewidth: 10 });
 	const zAxis = new LineSegments(zGeometry, zMaterial);
 	this.axesCorner.add(zAxis);
 	

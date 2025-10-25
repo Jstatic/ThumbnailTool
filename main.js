@@ -41,8 +41,13 @@ let viewerWheelTimeout = null;
 
 // Populate model dropdown from discovered files
 function populateModelDropdown() {
+	console.log('populateModelDropdown called');
 	const modelSelector = document.getElementById('model-selector');
-	if (!modelSelector) return;
+	console.log('modelSelector found:', !!modelSelector);
+	if (!modelSelector) {
+		console.error('Model selector not found in populateModelDropdown!');
+		return;
+	}
 	
 	// Clear existing options
 	modelSelector.innerHTML = '';
@@ -523,6 +528,38 @@ function clearThumbnailPreview() {
 	console.log('Thumbnail preview cleared');
 }
 
+// Reset only the new thumbnail view without clearing existing preview
+function resetNewThumbnailView() {
+	console.log('Resetting new thumbnail view...');
+	
+	// Reset thumbnail state variables
+	thumbnailOffset = { x: 0, y: 0 };
+	thumbnailScale = 1.0;
+	thumbnailImage = null;
+	newSnapshotData = null;
+	
+	const updateBtn = document.getElementById('use-snapshot');
+	if (updateBtn) {
+		updateBtn.style.display = 'none';
+	}
+	
+	// Clear the new thumbnail canvas
+	if (thumbnailCanvas && thumbnailCtx) {
+		thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+	}
+	
+	// Re-enable live updating and capture current model view
+	isLiveUpdating = true;
+	hasUserInteracted = true;
+	
+	// Capture the current model view for the new thumbnail
+	setTimeout(() => {
+		updateThumbnailFromViewport();
+	}, 100);
+	
+	console.log('New thumbnail view reset complete');
+}
+
 // Reset lighting slider to default
 function resetLightingSlider() {
 	const lightIntensitySlider = document.getElementById('light-intensity');
@@ -658,11 +695,22 @@ function handleFileUpload(event) {
 
 // Button controls
 document.addEventListener('DOMContentLoaded', () => {
+	console.log('=== DOMContentLoaded fired ===');
 	// Populate model dropdown first
 	populateModelDropdown();
 	
-	init();
-	initThumbnailCanvas();
+	try {
+		init();
+		console.log('init() completed, viewer:', viewer);
+	} catch (error) {
+		console.error('Error in init():', error);
+	}
+	
+	try {
+		initThumbnailCanvas();
+	} catch (error) {
+		console.error('Error in initThumbnailCanvas():', error);
+	}
 	
 	// Add window resize handler to update viewer size
 	window.addEventListener('resize', () => {
@@ -674,40 +722,51 @@ document.addEventListener('DOMContentLoaded', () => {
 	hasUserInteracted = true;
 	
 	// Grid toggle
-	document.getElementById('toggle-grid').addEventListener('click', () => {
-		viewer.state.grid = !viewer.state.grid;
-		viewer.updateDisplay();
-		showThumbnailGuides = viewer.state.grid;
-		
-		const btn = document.getElementById('toggle-grid');
-		btn.textContent = viewer.state.grid ? '⊞' : '⊟';
-		
-		if (viewer.state.grid) {
-			btn.classList.add('active');
-		} else {
-			btn.classList.remove('active');
-		}
-		
-		if (thumbnailCanvas && thumbnailCanvas.classList.contains('active') && thumbnailImage) {
-			renderThumbnail();
-		}
-	});
+	const gridToggleBtn = document.getElementById('toggle-grid');
+	if (gridToggleBtn && viewer) {
+		gridToggleBtn.addEventListener('click', () => {
+			viewer.state.grid = !viewer.state.grid;
+			viewer.updateDisplay();
+			showThumbnailGuides = viewer.state.grid;
+			
+			const btn = document.getElementById('toggle-grid');
+			btn.textContent = viewer.state.grid ? '⊞' : '⊟';
+			
+			if (viewer.state.grid) {
+				btn.classList.add('active');
+			} else {
+				btn.classList.remove('active');
+			}
+			
+			if (thumbnailCanvas && thumbnailCanvas.classList.contains('active') && thumbnailImage) {
+				renderThumbnail();
+			}
+		});
+	}
 	
 	// Reset view
-	document.getElementById('reset-view').addEventListener('click', () => {
-		viewer.controls.reset();
-		clearThumbnailPreview();
-	});
+	const resetViewBtn = document.getElementById('reset-view');
+	if (resetViewBtn) {
+		resetViewBtn.addEventListener('click', () => {
+			viewer.controls.reset();
+			resetNewThumbnailView();
+		});
+	}
 	
 	// Cancel button
-	document.getElementById('cancel-btn').addEventListener('click', () => {
-		viewer.controls.reset();
-		clearThumbnailPreview();
-		resetLightingSlider();
-	});
+	const cancelBtn = document.getElementById('cancel-btn');
+	if (cancelBtn) {
+		cancelBtn.addEventListener('click', () => {
+			viewer.controls.reset();
+			resetNewThumbnailView();
+			resetLightingSlider();
+		});
+	}
 	
 	// Use snapshot button
-	document.getElementById('use-snapshot').addEventListener('click', () => {
+	const useSnapshotBtn = document.getElementById('use-snapshot');
+	if (useSnapshotBtn) {
+		useSnapshotBtn.addEventListener('click', () => {
 		if (newSnapshotData && thumbnailCanvas && thumbnailCtx) {
 			const btn = document.getElementById('use-snapshot');
 			if (btn) {
@@ -753,17 +812,38 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Re-render with guides
 			renderThumbnail();
 		}
-	});
+		});
+	}
 	
 	// Model selector
 	const modelSelector = document.getElementById('model-selector');
+	console.log('Model selector element:', modelSelector);
+	console.log('Model selector options count:', modelSelector ? modelSelector.options.length : 0);
+	if (modelSelector && modelSelector.options.length > 0) {
+		console.log('Available options:', Array.from(modelSelector.options).map(opt => opt.value));
+	}
 	if (modelSelector) {
+		// Try multiple event types to debug
 		modelSelector.addEventListener('change', (event) => {
+			console.log('CHANGE EVENT FIRED!');
 			const selectedModel = event.target.value;
 			console.log('Model changed to:', selectedModel);
 			loadModel(selectedModel);
 			resetLightingSlider();
 		});
+		modelSelector.addEventListener('click', (event) => {
+			console.log('CLICK EVENT on dropdown');
+		});
+		modelSelector.addEventListener('input', (event) => {
+			console.log('INPUT EVENT FIRED!');
+			const selectedModel = event.target.value;
+			console.log('Model changed to:', selectedModel);
+			loadModel(selectedModel);
+			resetLightingSlider();
+		});
+		console.log('Model selector event listeners attached');
+	} else {
+		console.error('Model selector not found!');
 	}
 	
 	// Set initial active state for grid button
@@ -780,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	// Lighting intensity slider
 	const lightIntensitySlider = document.getElementById('light-intensity');
-	if (lightIntensitySlider) {
+	if (lightIntensitySlider && viewer) {
 		// Store base lighting values
 		const baseAmbientIntensity = viewer.state.ambientIntensity;
 		const baseDirectIntensity = viewer.state.directIntensity;

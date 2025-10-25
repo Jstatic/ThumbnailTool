@@ -684,8 +684,8 @@ document.getElementById('reset-view').addEventListener('click', () => {
         controls.update();
     }
     
-    // Clear the modified canvas state and preview
-    clearThumbnailPreview();
+    // Reset only the new thumbnail view, preserve existing preview
+    resetNewThumbnailView();
 });
 
 // Grid toggle functionality
@@ -1006,6 +1006,38 @@ function showThumbnailCanvas() {
     }
 }
 
+// Reset only the new thumbnail view without clearing existing preview
+function resetNewThumbnailView() {
+    console.log('Resetting new thumbnail view...');
+    
+    // Reset thumbnail state variables
+    thumbnailOffset = { x: 0, y: 0 };
+    thumbnailScale = 1.0;
+    thumbnailImage = null;
+    newSnapshotData = null;
+    
+    const updateBtn = document.getElementById('use-snapshot');
+    if (updateBtn) {
+        updateBtn.style.display = 'none';
+    }
+    
+    // Clear the new thumbnail canvas
+    if (thumbnailCanvas && thumbnailCtx) {
+        thumbnailCtx.clearRect(0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+    }
+    
+    // Re-enable live updating and capture current model view
+    isLiveUpdating = true;
+    hasUserInteracted = true;
+    
+    // Capture the current model view for the new thumbnail
+    setTimeout(() => {
+        updateThumbnailFromViewport();
+    }, 100);
+    
+    console.log('New thumbnail view reset complete');
+}
+
 // Clear the modified canvas state and preview
 function clearThumbnailPreview() {
     // Reset state variables
@@ -1110,8 +1142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 controls.update();
             }
             
-            // Clear the modified canvas state and preview
-            clearThumbnailPreview();
+            // Reset only the new thumbnail view, preserve existing preview
+            resetNewThumbnailView();
         });
     }
     
@@ -1172,6 +1204,7 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Add event listener for model selector
     const modelSelector = document.getElementById('model-selector');
+
     if (modelSelector) {
         modelSelector.addEventListener('change', (event) => {
             const selectedModel = event.target.value;
