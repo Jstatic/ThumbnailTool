@@ -583,7 +583,7 @@ header .model-selector:focus {
 }
 
 .helpers-section.mobile-helpers .helper-item {
-    gap: 8px;
+    gap: 6px;
     padding: 6px 10px;
 }
 
