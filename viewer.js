@@ -107,7 +107,7 @@ export class Viewer {
 		this.backgroundColor = new Color(this.state.bgColor);
 
 		this.scene = new Scene();
-		this.scene.background = this.backgroundColor;
+		this.scene.background = null; // Transparent background
 
 		const fov = options.preset === Preset.ASSET_GENERATOR ? (0.8 * 180) / Math.PI : 60;
 		const aspect = el.clientWidth / el.clientHeight;
@@ -121,7 +121,7 @@ export class Viewer {
 			preserveDrawingBuffer: true, // Required for toDataURL()
 			logarithmicDepthBuffer: true // Better depth precision to reduce z-fighting
 		});
-		this.renderer.setClearColor(0xcccccc);
+		this.renderer.setClearColor(0x000000, 0); // Transparent background
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(el.clientWidth, el.clientHeight);
 
@@ -462,7 +462,7 @@ export class Viewer {
 
 		this.getCubeMapTexture(environment).then(({ envMap }) => {
 			this.scene.environment = envMap;
-			this.scene.background = this.state.background ? envMap : this.backgroundColor;
+			this.scene.background = this.state.background ? envMap : null; // Keep transparent when no background
 		});
 	}
 

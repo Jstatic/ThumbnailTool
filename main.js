@@ -29,7 +29,7 @@ let thumbnailScale = 1.0;
 let showThumbnailGuides = true;
 let isLiveUpdating = false;
 let lastThumbnailUpdate = 0;
-const THUMBNAIL_UPDATE_INTERVAL = 100;
+const THUMBNAIL_UPDATE_INTERVAL = 150; // Increased to reduce flickering
 let hasUserInteracted = false;
 let thumbnailInteractionTimeout = null;
 let isThumbnailInteracting = false;
@@ -132,11 +132,14 @@ function init() {
 	// Add wheel event listener for viewer container
 	el.addEventListener('wheel', onViewerWheel);
 	
-	// Override the animate loop to include thumbnail updates
+	// Override the animate loop to include thumbnail updates only when interacting
 	const originalAnimate = viewer.animate.bind(viewer);
 	viewer.animate = function(time) {
 		originalAnimate(time);
-		updateThumbnailFromViewport();
+		// Only update thumbnail when actively interacting with the camera
+		if (isViewerInteracting || viewerWheelTimeout !== null) {
+			updateThumbnailFromViewport();
+		}
 	};
 }
 
@@ -261,6 +264,11 @@ function onControlsEnd() {
 			isViewerInteracting = false;
 		}
 	}
+	
+	// Trigger one final thumbnail update after interaction ends
+	setTimeout(() => {
+		updateThumbnailFromViewport();
+	}, 50);
 }
 
 // Viewer wheel handler
@@ -286,6 +294,12 @@ function onViewerWheel(event) {
 			viewerContainer.classList.remove('interacting');
 			isViewerInteracting = false;
 		}
+		viewerWheelTimeout = null;
+		
+		// Trigger one final thumbnail update after wheeling stops
+		setTimeout(() => {
+			updateThumbnailFromViewport();
+		}, 50);
 	}, 150);
 }
 
@@ -314,48 +328,44 @@ function updateThumbnailFromViewport() {
 	if (now - lastThumbnailUpdate < THUMBNAIL_UPDATE_INTERVAL) return;
 	lastThumbnailUpdate = now;
 	
-	// Temporarily set background to null for transparent screenshot
-	const originalBackground = viewer.scene.background;
-	viewer.scene.background = null;
-	
-	// Hide grid during snapshot (we'll render it in the 2D canvas separately)
-	const gridWasVisible = viewer.state.grid;
-	if (viewer.gridHelper) {
-		viewer.scene.remove(viewer.gridHelper);
-	}
-	if (viewer.axesHelper) {
-		viewer.scene.remove(viewer.axesHelper);
-	}
-	
-	// Force a render with transparent background
-	viewer.renderer.setClearColor(0x000000, 0); // Transparent clear
-	viewer.render();
-	
-	// Capture the canvas as an image (PNG with transparency)
-	const imageData = viewer.renderer.domElement.toDataURL('image/png');
-	
-	// Restore the original background and grid
-	viewer.scene.background = originalBackground;
-	viewer.renderer.setClearColor(viewer.backgroundColor, 1);
-	if (gridWasVisible) {
+	// Use requestAnimationFrame to sync with render loop and reduce flickering
+	requestAnimationFrame(() => {
+		// Temporarily hide helpers during snapshot (less disruptive than remove/add)
+		const gridHelperVisible = viewer.gridHelper ? viewer.gridHelper.visible : false;
+		const axesHelperVisible = viewer.axesHelper ? viewer.axesHelper.visible : false;
+		
 		if (viewer.gridHelper) {
-			viewer.scene.add(viewer.gridHelper);
+			viewer.gridHelper.visible = false;
 		}
 		if (viewer.axesHelper) {
-			viewer.scene.add(viewer.axesHelper);
+			viewer.axesHelper.visible = false;
 		}
-	}
-	
-	// Store the snapshot data
-	newSnapshotData = imageData;
-	
-	// Load image and update display
-	thumbnailImage = new Image();
-	thumbnailImage.onload = () => {
-		showThumbnailCanvas();
-		renderThumbnail();
-	};
-	thumbnailImage.src = imageData;
+		
+		// Force a render
+		viewer.render();
+		
+		// Capture the canvas as an image (PNG with transparency)
+		const imageData = viewer.renderer.domElement.toDataURL('image/png');
+		
+		// Restore helper visibility immediately
+		if (viewer.gridHelper) {
+			viewer.gridHelper.visible = gridHelperVisible;
+		}
+		if (viewer.axesHelper) {
+			viewer.axesHelper.visible = axesHelperVisible;
+		}
+		
+		// Store the snapshot data
+		newSnapshotData = imageData;
+		
+		// Load image and update display
+		thumbnailImage = new Image();
+		thumbnailImage.onload = () => {
+			showThumbnailCanvas();
+			renderThumbnail();
+		};
+		thumbnailImage.src = imageData;
+	});
 }
 
 // Initialize thumbnail canvas
